@@ -46,6 +46,7 @@ class SDF2:
 
 
 def sdf2(f):
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         return SDF2(f(*args, **kwargs))
 
@@ -53,6 +54,7 @@ def sdf2(f):
 
 
 def op2(f):
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         return SDF2(f(*args, **kwargs))
 
@@ -61,6 +63,7 @@ def op2(f):
 
 
 def op23(f):
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         return d3.SDF3(f(*args, **kwargs))
 
