@@ -217,9 +217,21 @@ def triangle_bump(amplitude=1):
     return f
 
 
+def inverted(e):
+    """
+    Invert easing function
+    """
+
+    def f(t):
+        return e(1 - t)
+
+    f.__name__ = f"inverted({e=})"
+    return f
+
+
 def mirrored(e):
     """
-    Mirror and squash a given
+    Mirror and squash a given easing function
     """
 
     def f(t):
@@ -287,6 +299,7 @@ def _main():
         mirrored(in_sine),
         scale(mirrored(in_out_sine), -0.6),
         scale(mirrored(linear), -0.7),
+        inverted(linear),
     ]
     plt.rcParams["axes.prop_cycle"] *= cycler(
         linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
