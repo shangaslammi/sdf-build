@@ -193,8 +193,57 @@ def in_out_square(t):
     return np.where(t < 0.5, a, b)
 
 
+def cosine_bump(amplitude=1):
+    """
+    A cosine bump between 0 and 1 with given amplitude
+    """
+
+    def f(t):
+        return amplitude * (1 - (np.cos(np.clip(t, 0, 1) * 2 * np.pi) + 1) / 2)
+
+    f.__name__ = f"cosine_bump({amplitude=})"
+    return f
+
+
+def triangle_bump(amplitude=1):
+    """
+    A triangle bump between 0 and 1 with given amplitude
+    """
+
+    def f(t):
+        return -2 * amplitude * (np.abs(t - 0.5) - 0.5)
+
+    f.__name__ = f"triangle_bump({amplitude=})"
+    return f
+
+
+def mirrored(e):
+    """
+    Mirror and squash a given
+    """
+
+    def f(t):
+        return e(-2 * (np.abs(t - 0.5) - 0.5))
+
+    f.__name__ = f"mirrored({e=})"
+    return f
+
+
+def scale(e, amplitude):
+    """
+    Scale a given easing function
+    """
+
+    def f(t):
+        return amplitude * e(t)
+
+    f.__name__ = f"scale({e=},{amplitude=})"
+    return f
+
+
 def _main():
     import matplotlib.pyplot as plt
+    from cycler import cycler
 
     fs = [
         linear,
@@ -231,7 +280,17 @@ def _main():
         in_square,
         out_square,
         in_out_square,
+        cosine_bump(),
+        cosine_bump(-0.5),
+        triangle_bump(0.8),
+        triangle_bump(-0.1),
+        mirrored(in_sine),
+        scale(mirrored(in_out_sine), -0.6),
+        scale(mirrored(linear), -0.7),
     ]
+    plt.rcParams["axes.prop_cycle"] *= cycler(
+        linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
+    )
     x = np.linspace(0, 1, 1000)
     for f in fs:
         y = f(x)
