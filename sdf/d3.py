@@ -634,31 +634,6 @@ def wrap_around(other, x0, x1, r=None, e=ease.linear):
     return f
 
 
-@op3
-def modulate_between(sdf, a=ORIGIN, b=Z, e=ease.in_out_cubic):
-    """
-    Apply a distance offset transition between two control points
-    (e.g. make a rod thicker or thinner at some point or add a bump)
-
-    Args:
-        a, b (3D vectors): the two control points
-        e (scalar function): the distance offset function, will be called with
-            values between 0 (at control point ``a``) and 1 (at control point
-            ``b``).  Its result will be subtracted from the given SDF, thus
-            enlarging the object by that value.
-    """
-
-    # unit vector from control point a to b
-    ab = (ab := b - a) / (L := np.linalg.norm(ab))
-
-    def f(p):
-        # project current point onto control direction, clip and apply easing
-        offset = e(np.clip((p - a) @ ab / L, 0, 1))
-        return (dist := sdf(p)) - offset.reshape(dist.shape)
-
-    return f
-
-
 # 3D => 2D Operations
 
 
@@ -693,3 +668,4 @@ erode = op3(dn.erode)
 shell = op3(dn.shell)
 repeat = op3(dn.repeat)
 mirror = op3(dn.mirror)
+modulate_between = op3(dn.modulate_between)

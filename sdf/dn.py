@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+from . import ease
 
 _min = np.minimum
 _max = np.maximum
@@ -111,13 +112,37 @@ def shell(other, thickness=1, type="center"):
     )[type]
 
 
+def modulate_between(sdf, a, b, e=ease.in_out_cubic):
+    """
+    Apply a distance offset transition between two control points
+    (e.g. make a rod thicker or thinner at some point or add a bump)
+
+    Args:
+        a, b (vectors): the two control points
+        e (scalar function): the distance offset function, will be called with
+            values between 0 (at control point ``a``) and 1 (at control point
+            ``b``).  Its result will be subtracted from the given SDF, thus
+            enlarging the object by that value.
+    """
+
+    # unit vector from control point a to b
+    ab = (ab := b - a) / (L := np.linalg.norm(ab))
+
+    def f(p):
+        # project current point onto control direction, clip and apply easing
+        offset = e(np.clip((p - a) @ ab / L, 0, 1))
+        return (dist := sdf(p)) - offset.reshape(dist.shape)
+
+    return f
+
+
 def mirror(other, direction, at=0):
     """
     Mirror around a given plane defined by ``origin`` reference point and
     ``direction``.
 
     Args:
-        direction (3D vector): direction to mirror to (e.g. :any:`X` to mirror along X axis)
+        direction (vector): direction to mirror to (e.g. :any:`X` to mirror along X axis)
         at (3D vector): point to mirror at. Default is the origin.
     """
     direction = direction / np.linalg.norm(direction)
