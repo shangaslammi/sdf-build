@@ -111,6 +111,19 @@ def shell(other, thickness=1, type="center"):
     )[type]
 
 
+def mirror(other, direction=X, origin=ORIGIN, keep=False):
+    """
+    Mirror around a given plane defined by ``origin`` reference point and
+    ``direction``.
+
+    Args:
+        direction (3D vector): direction to mirror to
+        origin (3D vector): point to mirror at. Default is :any:`ORIGIN`.
+        keep (bool): whether to keep the original. Defaults to ``False``.
+    """
+    raise NotImplementedError
+
+
 def repeat(other, spacing, count=None, padding=0):
     count = np.array(count) if count is not None else None
     spacing = np.array(spacing)
