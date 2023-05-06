@@ -111,17 +111,30 @@ def shell(other, thickness=1, type="center"):
     )[type]
 
 
-def mirror(other, direction=X, origin=ORIGIN, keep=False):
+def mirror(other, direction, at=0):
     """
     Mirror around a given plane defined by ``origin`` reference point and
     ``direction``.
 
     Args:
-        direction (3D vector): direction to mirror to
-        origin (3D vector): point to mirror at. Default is :any:`ORIGIN`.
-        keep (bool): whether to keep the original. Defaults to ``False``.
+        direction (3D vector): direction to mirror to (e.g. :any:`X` to mirror along X axis)
+        at (3D vector): point to mirror at. Default is the origin.
     """
-    raise NotImplementedError
+    direction = direction / np.linalg.norm(direction)
+
+    def f(p):
+        projdir = np.expand_dims((p - at) @ direction, axis=1) * direction
+        # mirrored point:
+        # - project 'p' onto 'direction' (result goes into 'projdir' direction)
+        # - projected point is at   'at + projdir'
+        # - remember direction from projected point to the original point (p - (at + projdir))
+        # - from origin 'at' go backwards the projected direction (at - projdir)
+        # - from that target, move along the remembered direction (p - (at + projdir))
+        # - pmirr = at - projdir + (p - (at + projdir))
+        # - the 'at' cancels out, the projdir is subtracted twice from the point
+        return other(p - 2 * projdir)
+
+    return f
 
 
 def repeat(other, spacing, count=None, padding=0):
