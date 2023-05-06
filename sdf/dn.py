@@ -89,11 +89,26 @@ def erode(other, r):
     return f
 
 
-def shell(other, thickness):
-    def f(p):
-        return np.abs(other(p)) - thickness / 2
+def shell(other, thickness=1, type="center"):
+    """
+    Keep only a margin of a given thickness around the object's boundary.
 
-    return f
+    Args:
+        thickness (float): the resulting thickness
+        type (str): what kind of shell to generate.
+
+            ``"center"`` (default)
+                shell is spaced symmetrically around boundary
+            ``"outer"``
+                the resulting shell will be ``thickness`` larger than before
+            ``"inner"``
+                the resulting shell will be as large as before
+    """
+    return dict(
+        center=lambda p: np.abs(other(p)) - thickness / 2,
+        inner=other - other.erode(thickness),
+        outer=other.dilate(thickness) - other,
+    )[type]
 
 
 def repeat(other, spacing, count=None, padding=0):
