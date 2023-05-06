@@ -134,7 +134,34 @@ def plane(normal=UP, point=ORIGIN):
 
 
 @sdf3
-def slab(x0=None, y0=None, z0=None, x1=None, y1=None, z1=None, k=None):
+def slab(
+    x0=None,
+    y0=None,
+    z0=None,
+    x1=None,
+    y1=None,
+    z1=None,
+    dx=None,
+    dy=None,
+    dz=None,
+    k=None,
+):
+    # How to improve this if/None madness?
+    if dx is not None:
+        if x0 is None:
+            x0 = -dx / 2
+        if x1 is None:
+            x1 = dx / 2
+    if dy is not None:
+        if y0 is None:
+            y0 = -dy / 2
+        if y1 is None:
+            y1 = dy / 2
+    if dz is not None:
+        if z0 is None:
+            z0 = -dz / 2
+        if z1 is None:
+            z1 = dz / 2
     fs = []
     if x0 is not None:
         fs.append(plane(X, (x0, 0, 0)))
