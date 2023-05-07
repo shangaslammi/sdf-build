@@ -1,8 +1,14 @@
 import functools
 import numpy as np
 import operator
+import warnings
 
 from . import dn, d2, ease, mesh
+
+# external modules
+import scipy.optimize
+from scipy.linalg import LinAlgWarning
+import rich.progress
 
 # Constants
 
@@ -13,6 +19,11 @@ Y = np.array((0, 1, 0))
 Z = np.array((0, 0, 1))
 
 UP = Z
+DOWN = -Z
+RIGHT = X
+LEFT = -X
+BACK = Y
+FRONT = -Y
 
 # SDF Class
 
@@ -47,6 +58,36 @@ class SDF3:
 
     def generate(self, *args, **kwargs):
         return mesh.generate(self, *args, **kwargs)
+
+    def closest_surface_point(self, point):
+        def distance(p):
+            return np.repeat(self.f(np.expand_dims(p, axis=0))[0], 3)
+
+        optima = dict()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", LinAlgWarning)
+            for method in (
+                # loosely sorted by speed
+                "df-sane",
+                "broyden2",
+                "lm",
+                "hybr",
+                "broyden1",
+                "anderson",
+                "linearmixing",
+                "diagbroyden",
+                "excitingmixing",
+                "krylov",
+            ):
+                try:
+                    optima[method] = scipy.optimize.root(
+                        distance, x0=np.array(point), method=method
+                    )
+                except Exception as e:
+                    pass
+                if np.allclose(optima[method].fun, 0):
+                    break
+        return optima[min(optima, key=lambda x: optima[x].fun[0])].x
 
     def save(self, path, *args, **kwargs):
         return mesh.save(path, self, *args, **kwargs)

@@ -14,6 +14,7 @@ setup(
         "scikit-image>=0.17",
         "scipy",
         "Pillow",
+        "rich",
     ],
     license="MIT",
     classifiers=(
