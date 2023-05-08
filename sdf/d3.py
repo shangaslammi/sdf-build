@@ -224,6 +224,61 @@ class SDF3:
                 )
         return closest_point
 
+    def distance_to_plane(self, origin, normal, return_point=False):
+        """
+        Find the (minimum) distance to a plane around an ``origin`` that points
+        into the ``normal`` direction.
+
+        Args:
+            origin (3d vector): a point on the plane
+            normal (3d vector): normal vector of the plane
+
+        Returns:
+            float: the (minimum) distance to the plane
+            float, 3d vector : distance and closest point if ``return_point=True``
+        """
+        basemat = np.array(
+            [(e1 := _perpendicular(normal)), (e2 := np.cross(normal, e1))]
+        ).T
+
+        def transform(t):
+            return origin + basemat @ t
+
+        def distance(t):
+            return self.f(np.expand_dims(transform(t), axis=0)).ravel()[0]
+
+        optima = dict()
+        with warnings.catch_warnings():
+            # warnings.simplefilter("ignore", (LinAlgWarning, RuntimeWarning))
+            for method in (
+                "Nelder-Mead",
+                "Powell",
+                "CG",
+                "BFGS",
+                "L-BFGS-B",
+                "TNC",
+                "COBYLA",
+                "SLSQP",
+                "trust-constr",
+            ):
+                try:
+                    optima[method] = (
+                        opt := scipy.optimize.minimize(
+                            distance, x0=[0, 0], method=method
+                        )
+                    )
+                    opt.point = transform(opt.x)
+                    logger.debug(f"{method = }, {opt = }")
+                except Exception as e:
+                    logger.error(f"{method = } error {e!r}")
+
+        best_min = optima[min(optima, key=lambda m: optima[m].fun)]
+        closest_point = transform(best_min.x)
+        if return_point:
+            return best_min.fun, closest_point
+        else:
+            return best_min.fun
+
     def save(self, path, *args, **kwargs):
         return mesh.save(path, self, *args, **kwargs)
 
