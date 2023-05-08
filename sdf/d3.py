@@ -61,8 +61,9 @@ class SDF3:
 
     def closest_surface_point(self, point):
         def distance(p):
+            # root() wants same input/output dims (yeah...)
             return np.repeat(self.f(np.expand_dims(p, axis=0))[0], 3)
-
+        d = self.f([point])
         optima = dict()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", LinAlgWarning)
@@ -80,12 +81,13 @@ class SDF3:
                 "krylov",
             ):
                 try:
-                    optima[method] = scipy.optimize.root(
+                    optima[method] = (opt:=scipy.optimize.root()
                         distance, x0=np.array(point), method=method
-                    )
+                    ))
                 except Exception as e:
                     pass
-                if np.allclose(optima[method].fun, 0):
+                zero_error = abs(opt.fun[0])
+                if np.allclose(optima[method].fun, 0) and np.linalg.norm(optima[method].x - point):
                     break
         return optima[min(optima, key=lambda x: optima[x].fun[0])].x
 
