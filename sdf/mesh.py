@@ -96,7 +96,6 @@ def generate(
     verbose=True,
     sparse=True,
 ):
-
     start = time.time()
 
     if bounds is None:
@@ -240,7 +239,6 @@ def _debug_triangles(X, Y, Z):
 
 
 def sample_slice(sdf, w=1024, h=1024, x=None, y=None, z=None, bounds=None):
-
     if bounds is None:
         bounds = _estimate_bounds(sdf)
     (x0, y0, z0), (x1, y1, z1) = bounds
