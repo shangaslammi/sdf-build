@@ -301,7 +301,6 @@ class SDF3:
         distance = very_much - self.distance_to_plane(
             origin=-very_much * direction, normal=direction
         )
-        logger.warning(f"{distance = }")
         return self.translate(distance * direction)
 
     def save(self, path, *args, **kwargs):
