@@ -296,6 +296,14 @@ class SDF3:
         )
         return self.surface_intersection(start=plane_point, direction=normal)
 
+    def move_to_positive(self, direction=Z):
+        very_much = 1e9
+        distance = very_much - self.distance_to_plane(
+            origin=-very_much * direction, normal=direction
+        )
+        logger.warning(f"{distance = }")
+        return self.translate(distance * direction)
+
     def save(self, path, *args, **kwargs):
         return mesh.save(path, self, *args, **kwargs)
 
