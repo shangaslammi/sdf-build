@@ -1,3 +1,4 @@
+import logging
 import functools
 import numpy as np
 import operator
@@ -11,6 +12,8 @@ from scipy.linalg import LinAlgWarning
 import rich.progress
 
 # Constants
+
+logger = logging.getLogger(__name__)
 
 ORIGIN = np.array((0, 0, 0))
 
@@ -62,16 +65,17 @@ class SDF3:
     def closest_surface_point(self, point):
         def distance(p):
             # root() wants same input/output dims (yeah...)
-            return np.repeat(self.f(np.expand_dims(p, axis=0))[0], 3)
-        d = self.f([point])
+            return np.repeat(self.f(np.expand_dims(p, axis=0)).ravel()[0], 3)
+
+        dist = self.f(np.expand_dims(point, axis=0)).ravel()[0]
         optima = dict()
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", LinAlgWarning)
+            warnings.simplefilter("ignore", (LinAlgWarning, RuntimeWarning))
             for method in (
                 # loosely sorted by speed
-                "df-sane",
+                "lm",  # only lm seems to do the intuitive thing
                 "broyden2",
-                "lm",
+                "df-sane",
                 "hybr",
                 "broyden1",
                 "anderson",
@@ -81,15 +85,59 @@ class SDF3:
                 "krylov",
             ):
                 try:
-                    optima[method] = (opt:=scipy.optimize.root()
-                        distance, x0=np.array(point), method=method
-                    ))
+                    optima[method] = (
+                        opt := scipy.optimize.root(
+                            distance, x0=np.array(point), method=method
+                        )
+                    )
                 except Exception as e:
                     pass
-                zero_error = abs(opt.fun[0])
-                if np.allclose(optima[method].fun, 0) and np.linalg.norm(optima[method].x - point):
+                opt.zero_error = abs(opt.fun[0])
+                opt.zero_error_rel = opt.zero_error / dist
+                opt.dist_error = np.linalg.norm(opt.x - point) - dist
+                opt.dist_error_rel = opt.dist_error / dist
+                logger.debug(f"{method = }, {opt = }")
+                # shortcut if fit is good
+                if (
+                    np.allclose(opt.fun, 0)
+                    and abs(opt.dist_error / dist - 1) < 0.01
+                    and opt.dist_error < 0.01
+                ):
                     break
-        return optima[min(optima, key=lambda x: optima[x].fun[0])].x
+
+            def cost(m):
+                penalty = (
+                    # unsuccessfulness is penaltied
+                    (not optima[m].success)
+                    # a higher status normally means something bad
+                    + abs(getattr(optima[m], "status", 1))
+                    # the more we're away from zero, the worse it is
+                    # „1mm of away from boundary is as bad as one status or success step”
+                    + optima[m].zero_error
+                    # the distance error can be quite large e.g. for non-uniform scaling
+                    # and is not that important
+                    + optima[m].dist_error
+                )
+                logger.debug(f"{m = :20s}: {penalty = }")
+                return penalty
+
+            best_root = optima[best_method := min(optima, key=cost)]
+            closest_point = best_root.x
+            if (
+                best_root.zero_error > 1
+                or best_root.zero_error_rel > 0.01
+                or best_root.dist_error > 1
+                or best_root.dist_error_rel > 0.01
+            ):
+                warnings.warn(
+                    f"Closest surface point to {point} acc. to method {best_method!r} seems to be {closest_point}. "
+                    f"The SDF there is {best_root.fun[0]} (should be 0, that's {best_root.zero_error} or {best_root.zero_error_rel*100:.2f}% off).\n"
+                    f"Distance between {closest_point} and {point} is {np.linalg.norm(point - closest_point)}, "
+                    f"SDF says it should be {dist} (that's {best_root.dist_error} or {best_root.dist_error_rel*100:.2f}% off)).\n"
+                    f"The root finding algorithms seem to have a problem with your SDF, "
+                    f"this might be caused due to operations breaking the metric like non-uniform scaling."
+                )
+        return closest_point
 
     def save(self, path, *args, **kwargs):
         return mesh.save(path, self, *args, **kwargs)
