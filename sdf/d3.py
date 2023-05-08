@@ -279,6 +279,23 @@ class SDF3:
         else:
             return best_min.fun
 
+    def closest_surface_point_to_plane(self, origin, normal):
+        """
+        Find the closest surface point to a plane around an ``origin`` that points
+        into the ``normal`` direction.
+
+        Args:
+            origin (3d vector): a point on the plane
+            normal (3d vector): normal vector of the plane
+
+        Returns:
+            3d vector : closest surface point
+        """
+        distance, plane_point = self.distance_to_plane(
+            origin=origin, normal=normal, return_point=True
+        )
+        return self.surface_intersection(start=plane_point, direction=normal)
+
     def save(self, path, *args, **kwargs):
         return mesh.save(path, self, *args, **kwargs)
 
