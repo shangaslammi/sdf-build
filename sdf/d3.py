@@ -139,6 +139,61 @@ class SDF3:
                 )
         return closest_point
 
+    def surface_intersection(self, start, direction=None):
+        """
+        Start at a point, move into a direction and return surface intersection
+        coordinates.
+
+        Args:
+            start (3d vector): starting point
+            direction (3d vector or None): direction to move into, defaults to
+            ``-start`` (”move to origin”).
+
+        Returns:
+            3d vector: the optimized surface intersection
+        """
+        if direction is None:
+            direction = -start
+
+        def distance(t):
+            # root() wants same input/output dims (yeah...)
+            return self.f(np.expand_dims(start + t * direction, axis=0)).ravel()[0]
+
+        # TODO: also try many methods here as in closest_surface_start?
+        optima = dict()
+        for method in (
+            "bisect",
+            "brentq",
+            "brenth",
+            "ridder",
+            "toms748",
+            "newton",
+            "secant",
+            "halley",
+        ):
+            root_kwargs = dict(
+                method=method,
+                bracket=(-1e-9, 1e9),
+                x0=0,
+            )
+            # if method in {"bisect"}:
+            #     root_kwargs[x0]= -0
+            optima[method] = (
+                opt := scipy.optimize.root_scalar(distance, **root_kwargs)
+            )
+            opt.fun = distance(opt.root)
+            if opt.converged and np.allclose(opt.fun, 0):
+                break
+            logger.warning(f"{optima[method] = }")
+        best_method = min(
+            optima, key=lambda m: (distance(optima[m].root), optima[m].converged)
+        )
+        best_root = optima[best_method]
+        # if best_root.fun > 1e-6:
+        #     logger.warning(f"{best_root = }")
+        surface_intersection_point = start + opt.root * direction
+        return surface_intersection_point
+
     def save(self, path, *args, **kwargs):
         return mesh.save(path, self, *args, **kwargs)
 
