@@ -73,7 +73,7 @@ class SDF3:
             warnings.simplefilter("ignore", (LinAlgWarning, RuntimeWarning))
             for method in (
                 # loosely sorted by speed
-                "lm",  # only lm seems to do the intuitive thing
+                "lm",
                 "broyden2",
                 "df-sane",
                 "hybr",
@@ -114,8 +114,8 @@ class SDF3:
                     # the more we're away from zero, the worse it is
                     # „1mm of away from boundary is as bad as one status or success step”
                     + optima[m].zero_error
-                    # the distance error can be quite large e.g. for non-uniform scaling
-                    # and is not that important
+                    # the distance error can be quite large e.g. for non-uniform scaling,
+                    # and methods often find weird points, it makes sense to compare to the SDF
                     + optima[m].dist_error
                 )
                 logger.debug(f"{m = :20s}: {penalty = }")
@@ -141,8 +141,14 @@ class SDF3:
 
     def surface_intersection(self, start, direction=None):
         """
-        Start at a point, move into a direction and return surface intersection
-        coordinates.
+        ``start`` at a point, move (back or forth) along a line following a
+        ``direction`` and return surface intersection coordinates.
+
+        .. note::
+
+            In case there is no intersection, the result *might* (not sure
+            about that) return the point on the line that's closest to the
+            surface 🤔.
 
         Args:
             start (3d vector): starting point
@@ -155,44 +161,68 @@ class SDF3:
         if direction is None:
             direction = -start
 
+        def transform(t):
+            return start + t * direction
+
         def distance(t):
             # root() wants same input/output dims (yeah...)
-            return self.f(np.expand_dims(start + t * direction, axis=0)).ravel()[0]
+            return np.repeat(self.f(np.expand_dims(transform(t), axis=0)).ravel()[0], 3)
 
-        # TODO: also try many methods here as in closest_surface_start?
+        dist = self.f(np.expand_dims(start, axis=0)).ravel()[0]
         optima = dict()
-        for method in (
-            "bisect",
-            "brentq",
-            "brenth",
-            "ridder",
-            "toms748",
-            "newton",
-            "secant",
-            "halley",
-        ):
-            root_kwargs = dict(
-                method=method,
-                bracket=(-1e-9, 1e9),
-                x0=0,
-            )
-            # if method in {"bisect"}:
-            #     root_kwargs[x0]= -0
-            optima[method] = (
-                opt := scipy.optimize.root_scalar(distance, **root_kwargs)
-            )
-            opt.fun = distance(opt.root)
-            if opt.converged and np.allclose(opt.fun, 0):
-                break
-            logger.warning(f"{optima[method] = }")
-        best_method = min(
-            optima, key=lambda m: (distance(optima[m].root), optima[m].converged)
-        )
-        best_root = optima[best_method]
-        # if best_root.fun > 1e-6:
-        #     logger.warning(f"{best_root = }")
-        surface_intersection_point = start + opt.root * direction
-        return surface_intersection_point
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", (LinAlgWarning, RuntimeWarning))
+            for method in (
+                # loosely sorted by speed
+                "lm",
+                "broyden2",
+                "df-sane",
+                "hybr",
+                "broyden1",
+                "anderson",
+                "linearmixing",
+                "diagbroyden",
+                "excitingmixing",
+                "krylov",
+            ):
+                try:
+                    optima[method] = (
+                        opt := scipy.optimize.root(distance, x0=[0], method=method)
+                    )
+                except Exception as e:
+                    pass
+                opt.zero_error = abs(opt.fun[0])
+                opt.zero_error_rel = opt.zero_error / dist
+                opt.point = transform(opt.x[0])
+                logger.debug(f"{method = }, {opt = }")
+                # shortcut if fit is good
+                if np.allclose(opt.fun, 0):
+                    break
+
+            def cost(m):
+                penalty = (
+                    # unsuccessfulness is penaltied
+                    (not optima[m].success)
+                    # a higher status normally means something bad
+                    + abs(getattr(optima[m], "status", 1))
+                    # the more we're away from zero, the worse it is
+                    # „1mm of away from boundary is as bad as one status or success step”
+                    + optima[m].zero_error
+                )
+                logger.debug(f"{m = :20s}: {penalty = }")
+                return penalty
+
+            best_root = optima[best_method := min(optima, key=cost)]
+            closest_point = transform(best_root.x[0])
+            if best_root.zero_error > 1 or best_root.zero_error_rel > 0.01:
+                warnings.warn(
+                    f"Surface intersection point from {start = } to {direction = }, acc. to method {best_method!r} seems to be {closest_point}. "
+                    f"The SDF there is {best_root.fun[0]} (should be 0, that's {best_root.zero_error} or {best_root.zero_error_rel*100:.2f}% off).\n"
+                    f"The root finding algorithms seem to have a problem with your SDF, "
+                    f"this might be caused due to operations breaking the metric like non-uniform scaling "
+                    f"or just because there is no intersection..."
+                )
+        return closest_point
 
     def save(self, path, *args, **kwargs):
         return mesh.save(path, self, *args, **kwargs)
