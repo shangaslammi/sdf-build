@@ -136,6 +136,29 @@ def modulate_between(sdf, a, b, e=ease.in_out_cubic):
     return f
 
 
+def stretch(sdf, a, b):
+    """
+    Stretch object at point a so that it is the same between a and b
+
+    Args:
+        a, b (point vectors): the control points
+    """
+    ab = (ab := b - a) / (L := np.linalg.norm(ab))
+
+    def f(p):
+        # s = ”how far are we between a and b as fraction?”
+        s = (p - a) @ ab / L
+        # „behind” a, everything is normal
+        # but between a and b, we want the distance at a
+        s = np.where((0 <= s) & (s <= 1), 0, s)
+        # „further than” b, we continue with what originally came „after” a
+        s = np.where(s > 1, s - 1, s)
+        # TODO: doesn't work yet for some reason
+        return sdf(a + (s * L * ab[:, np.newaxis]).T)
+
+    return f
+
+
 def mirror(other, direction, at=0):
     """
     Mirror around a given plane defined by ``origin`` reference point and
