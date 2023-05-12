@@ -305,7 +305,7 @@ def elongate(other, size):
 
 
 @op23
-def extrude(other, h):
+def extrude(other, h=np.inf):
     def f(p):
         d = other(p[:, [0, 1]])
         w = _vec(d.reshape(-1), np.abs(p[:, 2]) - h / 2)
