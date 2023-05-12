@@ -729,19 +729,7 @@ def bezier(
         t,
     )
     points = bezier_via_lerp(p1, p2, p3, p4, t_eq)
-
-    if via_union:
-        k = radius / 2 if k is None else k
-        return union(*[sphere(radius=radius, center=p) for p in points], k=k).erode(
-            k / 2
-        )
-
-    def f(p):
-        return (
-            np.array([np.linalg.norm(points - p_, axis=1).min() for p_ in p]) - radius
-        )
-
-    return f
+    return capsule_chain(points, radius=radius, k=k)
 
 
 def capsule_chain(points, radius=10, k=0):
