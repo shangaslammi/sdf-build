@@ -15,6 +15,9 @@ setup(
         "scipy",
         "Pillow",
         "rich",
+        "trame",
+        "pyvista",
+        "pint",
     ],
     license="MIT",
     classifiers=(

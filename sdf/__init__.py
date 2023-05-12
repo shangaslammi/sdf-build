@@ -23,3 +23,7 @@ from .mesh import (
 from .stl import (
     write_binary_stl,
 )
+
+import pint
+
+units = pint.UnitRegistry()

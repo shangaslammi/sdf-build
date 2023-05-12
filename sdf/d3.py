@@ -10,6 +10,7 @@ from . import dn, d2, ease, mesh
 import scipy.optimize
 from scipy.linalg import LinAlgWarning
 import rich.progress
+import pyvista as pv
 
 # Constants
 
@@ -303,8 +304,22 @@ class SDF3:
         )
         return self.translate(distance * direction)
 
-    def save(self, path, *args, **kwargs):
-        return mesh.save(path, self, *args, **kwargs)
+    def save(self, path="out.stl", openscad=False, plot=True, **kwargs):
+        mesh.save(path, self, **{**dict(samples=2**18), **kwargs})
+        print(f"Saved mesh to {path!r}")
+        if openscad:
+            with open((p := f"{path}.scad"), "w") as fh:
+                fh.write(
+                    f"""
+        import("{path}");
+                """.strip()
+                )
+                print(f"Saved OpenSCAD viewer script to {p!r}")
+        if plot:
+            m = pv.read(path)
+            with warnings.catch_warnings():
+                warnings.simplefilter(action="ignore", category=UserWarning)
+                return m.plot()
 
     def show_slice(self, *args, **kwargs):
         return mesh.show_slice(self, *args, **kwargs)
@@ -674,6 +689,106 @@ def icosahedron(r):
         return _max(_max(_max(a, b), c) - x, d) * r
 
     return f
+
+
+# Shapes
+
+
+def lerp(x1, x2, t):
+    return (1 - t) * x1 + t * x2
+
+
+def bezier_via_lerp(p1, p2, p3, p4, t):
+    t = np.array(t).reshape(-1, 1)
+    p12 = lerp(p1, p2, t)
+    p23 = lerp(p2, p3, t)
+    p34 = lerp(p3, p4, t)
+    p1223 = lerp(p12, p23, t)
+    p2334 = lerp(p23, p34, t)
+    return lerp(p1223, p2334, t)
+
+
+@sdf3
+def bezier(
+    p1=ORIGIN,
+    p2=10 * X,
+    p3=10 * Y,
+    p4=10 * Z,
+    radius=1,
+    steps=20,
+    via_union=True,
+    k=None,
+):
+    points = bezier_via_lerp(p1, p2, p3, p4, (t := np.linspace(0, 1, steps)))
+    lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
+    t_eq = np.interp(
+        np.arange(0, lengths.sum() + radius / 4, radius / 2),
+        np.hstack([0, np.cumsum(lengths)]),
+        t,
+    )
+    points = bezier_via_lerp(p1, p2, p3, p4, t_eq)
+
+    if via_union:
+        k = radius / 2 if k is None else k
+        return union(*[sphere(radius=radius, center=p) for p in points], k=k).erode(
+            k / 2
+        )
+
+    def f(p):
+        return (
+            np.array([np.linalg.norm(points - p_, axis=1).min() for p_ in p]) - radius
+        )
+
+    return f
+
+
+def capsule_chain(points, radius=10, k=0):
+    return union(
+        *[capsule(p1, p2, radius=radius) for p1, p2 in zip(points[0:-1], points[1:])],
+        k=k,
+    )
+
+
+def Thread(
+    pitch=5,
+    diameter=20,
+    offset=1,
+    left=False,
+):
+    """
+    An infinite thread
+    """
+    angleperz = -(2 * np.pi) / pitch
+    if left:
+        angleperz *= -1
+    thread = (
+        cylinder(swipediameter := diameter / 2 - offset)
+        .translate(X * offset)
+        .twist(angleperz)
+    )
+    thread.diameter = diameter
+    thread.pitch = pitch
+    thread.offset = offset
+    thread.left = left
+    return thread
+
+
+def Screw(
+    length=40,
+    head_shape=None,
+    head_height=10,
+    k_tip=10,
+    k_head=0,
+    **threadkwargs,
+):
+    if head_shape is None:
+        head_shape = d2.hexagon(30)
+    if not (thread := threadkwargs.pop("thread", None)):
+        thread = Thread(**threadkwargs)
+    k_tip = np.clip(k_tip, 0, min(thread.diameter, length)) or None
+    k_head = np.clip(k_head, 0, thread.diameter) or None
+    head = head_shape.extrude(head_height).translate(-Z * head_height / 2)
+    return head | (thread & slab(z0=0) & slab(z1=length).k(k_tip)).k(k_head)
 
 
 # Positioning
