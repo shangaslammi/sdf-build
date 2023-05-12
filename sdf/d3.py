@@ -3,6 +3,7 @@ import functools
 import numpy as np
 import operator
 import warnings
+import copy
 
 from . import dn, d2, ease, mesh
 
@@ -57,8 +58,9 @@ class SDF3:
         return difference(self, other)
 
     def k(self, k=None):
-        self._k = k
-        return self
+        newSelf = copy.deepcopy(self)
+        newSelf._k = k
+        return newSelf
 
     def generate(self, *args, **kwargs):
         return mesh.generate(self, *args, **kwargs)

@@ -1,6 +1,7 @@
 import functools
 import numpy as np
 import operator
+import copy
 
 from . import dn, d3, ease
 
@@ -41,8 +42,9 @@ class SDF2:
         return difference(self, other)
 
     def k(self, k=None):
-        self._k = k
-        return self
+        newSelf = copy.deepcopy(self)
+        newSelf._k = k
+        return newSelf
 
 
 def sdf2(f):
