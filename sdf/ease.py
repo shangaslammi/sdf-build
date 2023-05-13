@@ -1,8 +1,12 @@
-import numpy as np
+# system modules
 from dataclasses import dataclass
 from typing import Callable
 import itertools
 import functools
+import warnings
+
+# external modules
+import numpy as np
 
 
 @dataclass
@@ -19,14 +23,15 @@ class UnitFunction:
         def wrapper(self, *args, **kwargs):
             newfun = decorated_fun(self, *args, **kwargs)
             arglist = ",".join(
-                itertools.chain(
-                    map(repr, args), ("{k}={v!r}" for k, v in kwargs.items())
-                )
+                itertools.chain(map(str, args), (f"{k}={v}" for k, v in kwargs.items()))
             )
             newfun.__name__ = f"{self.f.__name__}.{decorated_fun.__name__}({arglist})"
             return type(self)(f=newfun, name=newfun.__name__)
 
         return wrapper
+
+    def __str__(self):
+        return self.name
 
     @property
     @modifier
@@ -45,25 +50,114 @@ class UnitFunction:
         return lambda t: self.f(-2 * (np.abs(t - 0.5) - 0.5))
 
     @modifier
-    def scale(self, factor):
+    def clip(self, min=None, max=None):
+        """
+        Clip function at low and/or high values
+        """
+        return lambda t: np.clip(self.f(t), min, max)
+
+    @modifier
+    def append(self, other, e=None):
+        """
+        Append another easing function and squish both into the [0;1] interval
+        """
+        if e is None:
+            e = in_out_square
+
+        def f(t):
+            mix = e(t)
+            return self.f(t * 2) * (1 - mix) + other((t - 0.5) * 2) * mix
+
+        return f
+
+    @modifier
+    def prepend(self, other, e=None):
+        """
+        Prepend another easing function and squish both into the [0;1] interval
+        """
+        if e is None:
+            e = in_out_square
+
+        def f(t):
+            mix = e(t)
+            return other(t * 2) * (1 - mix) + self.f((t - 0.5) * 2) * mix
+
+        return f
+
+    @modifier
+    def multiply(self, factor):
         """
         Scale function by ``factor``
         """
-        return lambda t: factor * self.f(t)
+        if isinstance(factor, UnitFunction):
+            return lambda t: self(t) * factor(t)
+        else:
+            return lambda t: factor * self.f(t)
 
     @modifier
     def add(self, offset):
         """
         Add ``offset`` to function
         """
-        return lambda t: self.f(t) + offset
+        if isinstance(offset, UnitFunction):
+            return lambda t: self(t) + offset(t)
+        else:
+            return lambda t: self.f(t) + offset
+
+    def __add__(self, offset):
+        return self.add(offset)
+
+    def __sub__(self, offset):
+        return self.add(-offset)
+
+    def __mul__(self, factor):
+        return self.multiply(factor)
+
+    def __neg__(self):
+        return self.multiply(-1)
+
+    def __truediv__(self, factor):
+        return self.multiply(1 / factor)
+
+    def __or__(self, other):
+        return self.transition(other)
+
+    def __rshift__(self, other):
+        return self.append(other)
+
+    def __lshift__(self, other):
+        return self.prepend(other)
 
     @modifier
-    def between(self, a, b):
+    def between(self, left=0, right=1, e=None):
         """
         Arrange so ``f(0)==a`` and ``f(1)==b``.
         """
-        raise NotImplementedError("Just a teaser that between() will be there 😉")
+        f0, f1 = self.f(np.array([0, 1]))
+        la = f0 - left
+        lb = f1 - right
+        if e is None:
+            e = linear
+
+        def f(t):
+            t_ = e(t)
+            return self.f(t) - (la * (1 - t_)) - lb * t_
+
+        return f
+
+    @modifier
+    def transition(self, other, e=None):
+        """
+        Transiton from one easing to another
+        """
+        if e is None:
+            e = linear
+
+        def f(t):
+            t_ = e(t)
+            return self.f(t) * (1 - t_) + other(t) * t_
+
+        return f
 
     @classmethod
     def function(cls, decorated_fun):
@@ -76,14 +170,13 @@ class UnitFunction:
             fig, ax_ = plt.subplots()
         else:
             ax_ = ax
-        t = np.linspace(0, 1, 100)
-        print(others)
+        t = np.linspace(0, 1, 1000)
         funs = list(others or [])
         if isinstance(self, UnitFunction):
             funs.insert(0, self)
         for f in funs:
             ax_.plot(t, f(t), label=getattr(f, "name", getattr(f, "__name__", str(f))))
-        ax_.legend()
+        ax_.legend(ncol=int(np.ceil(len(ax_.get_lines()) / 10)))
         if ax is None:
             plt.show()
         return ax_
@@ -244,12 +337,12 @@ def in_out_circ(t):
 @Easing.function
 def in_elastic(t, k=0.5):
     u = t - 1
-    return -1 * (2 ** (10 * u) * np.sin((u - k / 4) * (2 * np.pi) / k))
+    return -1 * (2 ** (10.0 * u) * np.sin((u - k / 4) * (2 * np.pi) / k))
 
 
 @Easing.function
 def out_elastic(t, k=0.5):
-    return 2 ** (-10 * t) * np.sin((t - k / 4) * (2 * np.pi / k)) + 1
+    return 2 ** (-10.0 * t) * np.sin((t - k / 4) * (2 * np.pi / k)) + 1
 
 
 @Easing.function
@@ -307,23 +400,17 @@ def in_out_bounce(t):
 
 @Easing.function
 def in_square(t):
-    a = np.zeros(len(t))
-    b = a + 1
-    return np.where(t < 1, a, b)
+    return np.heaviside(t - 1, 0)
 
 
 @Easing.function
 def out_square(t):
-    a = np.zeros(len(t))
-    b = a + 1
-    return np.where(t > 0, b, a)
+    return np.heaviside(t + 1, 0)
 
 
 @Easing.function
 def in_out_square(t):
-    a = np.zeros(len(t))
-    b = a + 1
-    return np.where(t < 0.5, a, b)
+    return np.heaviside(t - 0.5, 0)
 
 
 def _main():
@@ -337,48 +424,25 @@ def _main():
     plt.rcParams["axes.grid"] = True
     plt.rcParams["axes.axisbelow"] = True
     plt.rcParams["legend.fontsize"] = "small"
+    LOCALS = globals()
+    print(f"{LOCALS = }")
+    fig, axes = plt.subplots(nrows=2)
     Easing.plot(
-        linear,
-        in_quad,
-        out_quad,
-        in_out_quad,
-        in_cubic,
-        out_cubic,
-        in_out_cubic,
-        in_quart,
-        out_quart,
-        in_out_quart,
-        in_quint,
-        out_quint,
-        in_out_quint,
-        in_sine,
-        out_sine,
-        in_out_sine,
-        in_expo,
-        out_expo,
-        in_out_expo,
-        in_circ,
-        out_circ,
-        in_out_circ,
-        in_elastic,
-        out_elastic,
-        in_out_elastic,
-        in_back,
-        out_back,
-        in_out_back,
-        in_bounce,
-        out_bounce,
-        in_out_bounce,
-        in_square,
-        out_square,
-        in_out_square,
-        in_sine.symmetric,
-        in_out_sine.symmetric.scale(-0.6),
-        linear.symmetric.scale(-0.7),
-        in_out_sine.scale(-0.6).symmetric,
-        out_sine.scale(-0.6).reverse.symmetric.scale(2),
-        out_bounce.add(-0.5),
+        *sorted((obj for n, obj in LOCALS.items() if isinstance(obj, Easing)), key=str),
+        ax=axes[0],
     )
+    Easing.plot(
+        in_sine.symmetric,
+        in_out_sine.symmetric.multiply(-0.6),
+        linear.symmetric.multiply(-0.7),
+        in_out_sine.multiply(-0.6).symmetric,
+        out_sine.multiply(-0.6).reverse.symmetric.multiply(2),
+        out_bounce.add(-0.5),
+        ax=axes[1],
+    )
+    axes[0].set_title("Standard")
+    axes[1].set_title("Derived")
+    plt.show()
 
 
 if __name__ == "__main__":
