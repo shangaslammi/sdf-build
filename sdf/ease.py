@@ -1,6 +1,7 @@
 import numpy as np
 from dataclasses import dataclass
 from typing import Callable
+import itertools
 import functools
 
 
@@ -11,41 +12,44 @@ class UnitFunction:
     """
 
     f: Callable[float, float]
+    name: str
 
-    def remapper(decorated_fun):
+    def modifier(decorated_fun):
         @functools.wraps(decorated_fun)
-        def wrapper(self):
-            newfun = lambda t: self.f(decorated_fun(t))
-            newfun.__name__ = f"{self.f.__name__}.{decorated_fun.__name__}()"
-            return type(self)(newfun)
+        def wrapper(self, *args, **kwargs):
+            newfun = decorated_fun(self, *args, **kwargs)
+            arglist = ",".join(
+                itertools.chain(
+                    map(repr, args), ("{k}={v!r}" for k, v in kwargs.items())
+                )
+            )
+            newfun.__name__ = f"{self.f.__name__}.{decorated_fun.__name__}({arglist})"
+            return type(self)(f=newfun, name=newfun.__name__)
 
         return wrapper
 
-        return wrapper
-
-    @remapper
-    @staticmethod
-    def reverse(t):
+    @property
+    @modifier
+    def reverse(self):
         """
         Revert the function so it goes the other way round (starts at the end)
         """
-        return 1 - t
+        return lambda t: self.f(1 - t)
 
-    @remapper
-    @staticmethod
-    def symmetric(t):
+    @property
+    @modifier
+    def symmetric(self):
         """
         Mirror and squash function to make it symmetric
         """
-        return -2 * (np.abs(t - 0.5) - 0.5)
+        return lambda t: self.f(-2 * (np.abs(t - 0.5) - 0.5))
 
+    @modifier
     def scale(self, factor):
         """
         Scale function by ``factor``
         """
-        newfun = lambda t: factor * self.f(t)
-        newfun.__name__ = f"{self.f.__name__}.scale({factor!r})"
-        return type(self)(newfun)
+        return lambda t: factor * self.f(t)
 
     def __call__(self, t):
         return self.f(t)
@@ -58,7 +62,7 @@ class Easing(UnitFunction):
 
     @classmethod
     def function(cls, decorated_fun):
-        return cls(decorated_fun)
+        return cls(f=decorated_fun, name=decorated_fun.__name__)
 
 
 @Easing.function
@@ -326,13 +330,15 @@ def _main():
         in_square,
         out_square,
         in_out_square,
-        in_sine.symmetric(),
-        in_out_sine.symmetric().scale(-0.6),
-        linear.symmetric().scale(-0.7),
+        in_sine.symmetric,
+        in_out_sine.symmetric.scale(-0.6),
+        linear.symmetric.scale(-0.7),
+        in_out_sine.scale(-0.6).symmetric,
+        out_sine.scale(-0.6).reverse.symmetric.scale(10),
     ]
-    # plt.rcParams["axes.prop_cycle"] *= cycler(
-    #     linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
-    # )
+    plt.rcParams["axes.prop_cycle"] *= cycler(
+        linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
+    )
     x = np.linspace(0, 1, 1000)
     for f in fs:
         y = f(x)
