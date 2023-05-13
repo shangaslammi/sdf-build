@@ -65,6 +65,25 @@ class UnitFunction:
         """
         raise NotImplementedError("Just a teaser that between() will be there 😉")
 
+    @classmethod
+    def function(cls, decorated_fun):
+        return cls(f=decorated_fun, name=decorated_fun.__name__)
+
+    def plot(self, *others, ax=None):
+        import matplotlib.pyplot as plt  # lazy import for speed
+
+        if ax is None:
+            fig, ax = plt.subplots()
+        t = np.linspace(0, 1, 100)
+        print(others)
+        funs = list(others or [])
+        if isinstance(self, UnitFunction):
+            funs.insert(0, self)
+        for f in funs:
+            ax.plot(t, f(t), label=getattr(f, "name", getattr(f, "__name__", str(f))))
+        ax.legend()
+        plt.show()
+
     def __call__(self, t):
         return self.f(t)
 
@@ -74,9 +93,7 @@ class Easing(UnitFunction):
     A function mapping the interval [0;1] to [0;1]
     """
 
-    @classmethod
-    def function(cls, decorated_fun):
-        return cls(f=decorated_fun, name=decorated_fun.__name__)
+    pass
 
 
 @Easing.function
