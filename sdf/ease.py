@@ -73,16 +73,20 @@ class UnitFunction:
         import matplotlib.pyplot as plt  # lazy import for speed
 
         if ax is None:
-            fig, ax = plt.subplots()
+            fig, ax_ = plt.subplots()
+        else:
+            ax_ = ax
         t = np.linspace(0, 1, 100)
         print(others)
         funs = list(others or [])
         if isinstance(self, UnitFunction):
             funs.insert(0, self)
         for f in funs:
-            ax.plot(t, f(t), label=getattr(f, "name", getattr(f, "__name__", str(f))))
-        ax.legend()
-        plt.show()
+            ax_.plot(t, f(t), label=getattr(f, "name", getattr(f, "__name__", str(f))))
+        ax_.legend()
+        if ax is None:
+            plt.show()
+        return ax_
 
     def __call__(self, t):
         return self.f(t)
@@ -329,6 +333,10 @@ def _main():
     plt.rcParams["axes.prop_cycle"] *= cycler(
         linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
     )
+    plt.rcParams["figure.autolayout"] = True
+    plt.rcParams["axes.grid"] = True
+    plt.rcParams["axes.axisbelow"] = True
+    plt.rcParams["legend.fontsize"] = "small"
     Easing.plot(
         linear,
         in_quad,
