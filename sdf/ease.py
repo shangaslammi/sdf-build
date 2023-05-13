@@ -113,6 +113,9 @@ class UnitFunction:
     def __mul__(self, factor):
         return self.multiply(factor)
 
+    def __rmul__(self, factor):
+        return self.multiply(factor)
+
     def __neg__(self):
         return self.multiply(-1)
 
