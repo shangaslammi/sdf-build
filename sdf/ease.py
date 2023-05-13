@@ -1,18 +1,82 @@
 import numpy as np
+from dataclasses import dataclass
+from typing import Callable
+import functools
 
 
+@dataclass
+class UnitFunction:
+    """
+    A function defined on the interval [0;1]
+    """
+
+    f: Callable[float, float]
+
+    def remapper(decorated_fun):
+        @functools.wraps(decorated_fun)
+        def wrapper(self):
+            newfun = lambda t: self.f(decorated_fun(t))
+            newfun.__name__ = f"{self.f.__name__}.{decorated_fun.__name__}()"
+            return type(self)(newfun)
+
+        return wrapper
+
+        return wrapper
+
+    @remapper
+    @staticmethod
+    def reverse(t):
+        """
+        Revert the function so it goes the other way round (starts at the end)
+        """
+        return 1 - t
+
+    @remapper
+    @staticmethod
+    def symmetric(t):
+        """
+        Mirror and squash function to make it symmetric
+        """
+        return -2 * (np.abs(t - 0.5) - 0.5)
+
+    def scale(self, factor):
+        """
+        Scale function by ``factor``
+        """
+        newfun = lambda t: factor * self.f(t)
+        newfun.__name__ = f"{self.f.__name__}.scale({factor!r})"
+        return type(self)(newfun)
+
+    def __call__(self, t):
+        return self.f(t)
+
+
+class Easing(UnitFunction):
+    """
+    A function mapping the interval [0;1] to [0;1]
+    """
+
+    @classmethod
+    def function(cls, decorated_fun):
+        return cls(decorated_fun)
+
+
+@Easing.function
 def linear(t):
     return t
 
 
+@Easing.function
 def in_quad(t):
     return t * t
 
 
+@Easing.function
 def out_quad(t):
     return -t * (t - 2)
 
 
+@Easing.function
 def in_out_quad(t):
     u = 2 * t - 1
     a = 2 * t * t
@@ -20,15 +84,18 @@ def in_out_quad(t):
     return np.where(t < 0.5, a, b)
 
 
+@Easing.function
 def in_cubic(t):
     return t * t * t
 
 
+@Easing.function
 def out_cubic(t):
     u = t - 1
     return u * u * u + 1
 
 
+@Easing.function
 def in_out_cubic(t):
     u = t * 2
     v = u - 2
@@ -37,15 +104,18 @@ def in_out_cubic(t):
     return np.where(u < 1, a, b)
 
 
+@Easing.function
 def in_quart(t):
     return t * t * t * t
 
 
+@Easing.function
 def out_quart(t):
     u = t - 1
     return -(u * u * u * u - 1)
 
 
+@Easing.function
 def in_out_quart(t):
     u = t * 2
     v = u - 2
@@ -54,15 +124,18 @@ def in_out_quart(t):
     return np.where(u < 1, a, b)
 
 
+@Easing.function
 def in_quint(t):
     return t * t * t * t * t
 
 
+@Easing.function
 def out_quint(t):
     u = t - 1
     return u * u * u * u * u + 1
 
 
+@Easing.function
 def in_out_quint(t):
     u = t * 2
     v = u - 2
@@ -71,30 +144,36 @@ def in_out_quint(t):
     return np.where(u < 1, a, b)
 
 
+@Easing.function
 def in_sine(t):
     return -np.cos(t * np.pi / 2) + 1
 
 
+@Easing.function
 def out_sine(t):
     return np.sin(t * np.pi / 2)
 
 
+@Easing.function
 def in_out_sine(t):
     return -0.5 * (np.cos(np.pi * t) - 1)
 
 
+@Easing.function
 def in_expo(t):
     a = np.zeros(len(t))
     b = 2 ** (10 * (t - 1))
     return np.where(t == 0, a, b)
 
 
+@Easing.function
 def out_expo(t):
     a = np.zeros(len(t)) + 1
     b = 1 - 2 ** (-10 * t)
     return np.where(t == 1, a, b)
 
 
+@Easing.function
 def in_out_expo(t):
     zero = np.zeros(len(t))
     one = zero + 1
@@ -103,15 +182,18 @@ def in_out_expo(t):
     return np.where(t == 0, zero, np.where(t == 1, one, np.where(t < 0.5, a, b)))
 
 
+@Easing.function
 def in_circ(t):
     return -1 * (np.sqrt(1 - t * t) - 1)
 
 
+@Easing.function
 def out_circ(t):
     u = t - 1
     return np.sqrt(1 - u * u)
 
 
+@Easing.function
 def in_out_circ(t):
     u = t * 2
     v = u - 2
@@ -120,15 +202,18 @@ def in_out_circ(t):
     return np.where(u < 1, a, b)
 
 
+@Easing.function
 def in_elastic(t, k=0.5):
     u = t - 1
     return -1 * (2 ** (10 * u) * np.sin((u - k / 4) * (2 * np.pi) / k))
 
 
+@Easing.function
 def out_elastic(t, k=0.5):
     return 2 ** (-10 * t) * np.sin((t - k / 4) * (2 * np.pi / k)) + 1
 
 
+@Easing.function
 def in_out_elastic(t, k=0.5):
     u = t * 2
     v = u - 1
@@ -137,17 +222,20 @@ def in_out_elastic(t, k=0.5):
     return np.where(u < 1, a, b)
 
 
+@Easing.function
 def in_back(t):
     k = 1.70158
     return t * t * ((k + 1) * t - k)
 
 
+@Easing.function
 def out_back(t):
     k = 1.70158
     u = t - 1
     return u * u * ((k + 1) * u + k) + 1
 
 
+@Easing.function
 def in_out_back(t):
     k = 1.70158 * 1.525
     u = t * 2
@@ -157,10 +245,12 @@ def in_out_back(t):
     return np.where(u < 1, a, b)
 
 
+@Easing.function
 def in_bounce(t):
     return 1 - out_bounce(1 - t)
 
 
+@Easing.function
 def out_bounce(t):
     a = (121 * t * t) / 16
     b = (363 / 40 * t * t) - (99 / 10 * t) + 17 / 5
@@ -169,88 +259,32 @@ def out_bounce(t):
     return np.where(t < 4 / 11, a, np.where(t < 8 / 11, b, np.where(t < 9 / 10, c, d)))
 
 
+@Easing.function
 def in_out_bounce(t):
     a = in_bounce(2 * t) * 0.5
     b = out_bounce(2 * t - 1) * 0.5 + 0.5
     return np.where(t < 0.5, a, b)
 
 
+@Easing.function
 def in_square(t):
     a = np.zeros(len(t))
     b = a + 1
     return np.where(t < 1, a, b)
 
 
+@Easing.function
 def out_square(t):
     a = np.zeros(len(t))
     b = a + 1
     return np.where(t > 0, b, a)
 
 
+@Easing.function
 def in_out_square(t):
     a = np.zeros(len(t))
     b = a + 1
     return np.where(t < 0.5, a, b)
-
-
-def cosine_bump(amplitude=1):
-    """
-    A cosine bump between 0 and 1 with given amplitude
-    """
-
-    def f(t):
-        return amplitude * (1 - (np.cos(np.clip(t, 0, 1) * 2 * np.pi) + 1) / 2)
-
-    f.__name__ = f"cosine_bump({amplitude=})"
-    return f
-
-
-def triangle_bump(amplitude=1):
-    """
-    A triangle bump between 0 and 1 with given amplitude
-    """
-
-    def f(t):
-        return -2 * amplitude * (np.abs(t - 0.5) - 0.5)
-
-    f.__name__ = f"triangle_bump({amplitude=})"
-    return f
-
-
-def inverted(e):
-    """
-    Invert easing function
-    """
-
-    def f(t):
-        return e(1 - t)
-
-    f.__name__ = f"inverted({e=})"
-    return f
-
-
-def mirrored(e):
-    """
-    Mirror and squash a given easing function
-    """
-
-    def f(t):
-        return e(-2 * (np.abs(t - 0.5) - 0.5))
-
-    f.__name__ = f"mirrored({e=})"
-    return f
-
-
-def scale(e, amplitude):
-    """
-    Scale a given easing function
-    """
-
-    def f(t):
-        return amplitude * e(t)
-
-    f.__name__ = f"scale({e=},{amplitude=})"
-    return f
 
 
 def _main():
@@ -292,22 +326,17 @@ def _main():
         in_square,
         out_square,
         in_out_square,
-        cosine_bump(),
-        cosine_bump(-0.5),
-        triangle_bump(0.8),
-        triangle_bump(-0.1),
-        mirrored(in_sine),
-        scale(mirrored(in_out_sine), -0.6),
-        scale(mirrored(linear), -0.7),
-        inverted(linear),
+        in_sine.symmetric(),
+        in_out_sine.symmetric().scale(-0.6),
+        linear.symmetric().scale(-0.7),
     ]
-    plt.rcParams["axes.prop_cycle"] *= cycler(
-        linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
-    )
+    # plt.rcParams["axes.prop_cycle"] *= cycler(
+    #     linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
+    # )
     x = np.linspace(0, 1, 1000)
     for f in fs:
         y = f(x)
-        plt.plot(x, y, label=f.__name__)
+        plt.plot(x, y, label=f.f.__name__)
     plt.legend()
     plt.show()
 
