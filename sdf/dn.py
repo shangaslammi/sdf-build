@@ -136,9 +136,9 @@ def modulate_between(sdf, a, b, e=ease.in_out_cubic):
     return f
 
 
-def stretch(sdf, a, b):
+def stretch(sdf, a, b, e=ease.linear):
     """
-    Stretch object at point a so that it is the same between a and b
+    Grab the object at point ``a`` and stretch the entire plane to ``b``.
 
     Args:
         a, b (point vectors): the control points
@@ -148,7 +148,7 @@ def stretch(sdf, a, b):
     def f(p):
         # s = ”how far are we between a and b as fraction?”
         s = np.clip((p - a) @ ab / L, 0, 1)
-        return sdf(p - (s * L * ab[:, np.newaxis]).T)
+        return sdf(p - (e(s) * L * ab[:, np.newaxis]).T)
 
     return f
 
