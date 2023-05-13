@@ -51,6 +51,20 @@ class UnitFunction:
         """
         return lambda t: factor * self.f(t)
 
+    @modifier
+    def add(self, offset):
+        """
+        Add ``offset`` to function
+        """
+        return lambda t: self.f(t) + offset
+
+    @modifier
+    def between(self, a, b):
+        """
+        Arrange so ``f(0)==a`` and ``f(1)==b``.
+        """
+        raise NotImplementedError("Just a teaser that between() will be there 😉")
+
     def __call__(self, t):
         return self.f(t)
 
@@ -335,6 +349,7 @@ def _main():
         linear.symmetric.scale(-0.7),
         in_out_sine.scale(-0.6).symmetric,
         out_sine.scale(-0.6).reverse.symmetric.scale(10),
+        out_bounce.add(-0.5),
     ]
     plt.rcParams["axes.prop_cycle"] *= cycler(
         linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
