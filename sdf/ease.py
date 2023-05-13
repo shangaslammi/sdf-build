@@ -326,7 +326,10 @@ def _main():
     import matplotlib.pyplot as plt
     from cycler import cycler
 
-    fs = [
+    plt.rcParams["axes.prop_cycle"] *= cycler(
+        linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
+    )
+    Easing.plot(
         linear,
         in_quad,
         out_quad,
@@ -365,18 +368,9 @@ def _main():
         in_out_sine.symmetric.scale(-0.6),
         linear.symmetric.scale(-0.7),
         in_out_sine.scale(-0.6).symmetric,
-        out_sine.scale(-0.6).reverse.symmetric.scale(10),
+        out_sine.scale(-0.6).reverse.symmetric.scale(2),
         out_bounce.add(-0.5),
-    ]
-    plt.rcParams["axes.prop_cycle"] *= cycler(
-        linestyle=["solid", "dashed", "dotted"], linewidth=[1, 2, 3]
     )
-    x = np.linspace(0, 1, 1000)
-    for f in fs:
-        y = f(x)
-        plt.plot(x, y, label=f.f.__name__)
-    plt.legend()
-    plt.show()
 
 
 if __name__ == "__main__":
