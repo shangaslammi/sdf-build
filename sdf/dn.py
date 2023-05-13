@@ -147,14 +147,8 @@ def stretch(sdf, a, b):
 
     def f(p):
         # s = ”how far are we between a and b as fraction?”
-        s = (p - a) @ ab / L
-        # „behind” a, everything is normal
-        # but between a and b, we want the distance at a
-        s = np.where((0 <= s) & (s <= 1), 0, s)
-        # „further than” b, we continue with what originally came „after” a
-        s = np.where(s > 1, s - 1, s)
-        # TODO: doesn't work yet for some reason
-        return sdf(a + (s * L * ab[:, np.newaxis]).T)
+        s = np.clip((p - a) @ ab / L, 0, 1)
+        return sdf(p - (s * L * ab[:, np.newaxis]).T)
 
     return f
 
