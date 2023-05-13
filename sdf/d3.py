@@ -511,12 +511,15 @@ def torus(r1, r2):
 def capsule(a, b, radius):
     a = np.array(a)
     b = np.array(b)
+    ba = b - a
+    babadot = np.dot(ba, ba)
+
+    r = radius if hasattr(radius, "__call__") else lambda h: radius
 
     def f(p):
         pa = p - a
-        ba = b - a
-        h = np.clip(np.dot(pa, ba) / np.dot(ba, ba), 0, 1).reshape((-1, 1))
-        return _length(pa - np.multiply(ba, h)) - radius
+        h = np.clip(np.dot(pa, ba) / babadot, 0, 1).reshape((-1, 1))
+        return _length(pa - np.multiply(ba, h)) - r(h.reshape(-1))
 
     return f
 
@@ -718,9 +721,23 @@ def bezier(
     p4=10 * Z,
     radius=1,
     steps=20,
-    via_union=True,
     k=None,
 ):
+    """
+    Generate a single bezier curve :any:`capsule_chain` from four
+    control points with a fixed or variable thickness
+
+    Args:
+        p1, p2, p3, p4 (point vectors): the control points. Segment will start at p1 and end at p4.
+        radius (float or callable): either a fixed number as radius or a
+            callable taking a number within [0;1] and returning a radius, e.g.
+            the easing function :any:`ease.linear` or
+            ``radius=ease.linear.between(10,2)`` for a linear transition
+            between radii. (not yet implemented)
+        k (float or None): handed to :any:`capsule_chain`
+
+
+    """
     points = bezier_via_lerp(p1, p2, p3, p4, (t := np.linspace(0, 1, steps)))
     lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
     t_eq = np.interp(
