@@ -136,10 +136,10 @@ class UnitFunction:
         return self.transition(other)
 
     def __rshift__(self, offset):
-        return self.shift(other)
+        return self.shift(offset)
 
     def __lshift__(self, offset):
-        return self.shift(offset)
+        return self.shift(-offset)
 
     def __getitem__(self, index):
         if isinstance(index, Easing):
