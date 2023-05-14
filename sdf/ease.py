@@ -54,6 +54,9 @@ class UnitFunction:
         """
         Clip function at low and/or high values
         """
+        if min is None and max is None:
+            min = 0
+            max = 1
         return lambda t: np.clip(self.f(t), min, max)
 
     @modifier
@@ -83,6 +86,13 @@ class UnitFunction:
             return other(t * 2) * (1 - mix) + self.f((t - 0.5) * 2) * mix
 
         return f
+
+    @modifier
+    def shift(self, offset):
+        """
+        Shift function on x-axis into positive direction by ``offset``.
+        """
+        return lambda t: self.f(t - offset)
 
     @modifier
     def multiply(self, factor):
@@ -125,11 +135,11 @@ class UnitFunction:
     def __or__(self, other):
         return self.transition(other)
 
-    def __rshift__(self, other):
-        return self.append(other)
+    def __rshift__(self, offset):
+        return self.shift(other)
 
-    def __lshift__(self, other):
-        return self.prepend(other)
+    def __lshift__(self, offset):
+        return self.shift(offset)
 
     @modifier
     def between(self, left=0, right=1, e=None):
