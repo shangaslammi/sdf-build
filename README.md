@@ -1,3 +1,21 @@
+# 📢 Note
+
+This is my fork of [fogleman/sdf](https://github.com/fogleman/sdf). I added so many things that it doesn't really make sense to just open a PR upstream. Probably I'll just maintain my own fork. 
+
+Documentation of the new features is lacking entirely 😅
+
+Here is a rough list:
+
+- `sdf.ease` go a huge revamp - easings can now be manipulated and combined easily:
+    ```python
+    ease.linear.plot() # show what it looks like
+    ease.Easing.plot(ease.linear, ease.in_cubic, ease.smoothstep) # show multiple for comparison
+    3 * ease.linear.symmetric + 1  # This makes a triangle starting at 1 and going as high as 4 in the center
+    ease.smoothstep[0.2:0.8] # zoom into function
+    # etc, much more ...
+    ```
+
+
 # sdf
 
 Generate 3D meshes based on SDFs (signed distance functions) with a
