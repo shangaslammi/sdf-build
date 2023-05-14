@@ -7,6 +7,24 @@ import warnings
 
 # external modules
 import numpy as np
+import scipy.optimize
+
+
+@dataclass
+@functools.total_ordering
+class Extremum:
+    """
+    Container for min and max in Easing
+    """
+
+    pos: float
+    value: float
+
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __lt__(self, other):
+        return self.value < other.value
 
 
 @dataclass
@@ -29,6 +47,9 @@ class Easing:
             return type(self)(f=newfun, name=newfun.__name__)
 
         return wrapper
+
+    def __repr__(self):
+        return self.name
 
     def __str__(self):
         return self.name
@@ -229,6 +250,25 @@ class Easing:
         if ax is None:
             plt.show()
         return ax_
+
+    @functools.cached_property
+    def min(self):
+        v = self.f(t := np.linspace(0, 1, 1000))
+        approxmin = Extremum(pos=t[i := np.argmin(v)], value=v[i])
+        opt = scipy.optimize.minimize(self, x0=[approxmin.pos], bounds=[(0, 1)])
+        optmin = Extremum(pos=opt.x[0], value=opt.fun)
+        return min(approxmin, optmin)
+
+    @functools.cached_property
+    def max(self):
+        """
+        Determine the maximum value
+        """
+        v = self.f(t := np.linspace(0, 1, 1000))
+        approxmax = Extremum(pos=t[i := np.argmax(v)], value=v[i])
+        opt = scipy.optimize.minimize(-self, x0=[approxmax.pos], bounds=[(0, 1)])
+        optmax = Extremum(pos=opt.x[0], value=-opt.fun)
+        return max(approxmax, optmax)
 
     def __call__(self, t):
         return self.f(t)
