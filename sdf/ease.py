@@ -270,6 +270,10 @@ class Easing:
         optmax = Extremum(pos=opt.x[0], value=-opt.fun)
         return max(approxmax, optmax)
 
+    @functools.cached_property
+    def mean(self):
+        return np.mean(self.f(np.linspace(0, 1, 1000)))
+
     def __call__(self, t):
         return self.f(t)
 
@@ -492,6 +496,14 @@ def out_square(t):
 @Easing.function
 def in_out_square(t):
     return np.heaviside(t - 0.5, 0)
+
+
+def constant(x):
+    return Easing(f=lambda t: np.full_like(t, x), name=f"constant({x})")
+
+
+zero = constant(0)
+one = constant(1)
 
 
 @Easing.function

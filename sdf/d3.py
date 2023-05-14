@@ -735,13 +735,15 @@ def bezier(
             ``radius=ease.linear.between(10,2)`` for a linear transition
             between radii. (not yet implemented)
         k (float or None): handed to :any:`capsule_chain`
-
-
     """
     points = bezier_via_lerp(p1, p2, p3, p4, (t := np.linspace(0, 1, steps)))
     lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
+    if isinstance(radius, (float, int)):
+        radius = ease.constant(radius)
+    # TODO: better steps taking curvature and changing radius into account
     t_eq = np.interp(
-        np.arange(0, lengths.sum() + radius / 4, radius / 2),
+        np.arange(0, lengths.sum() + radius.mean / 4, radius.mean / 2),
+        # np.linspace(0, lengths.sum(), steps),
         np.hstack([0, np.cumsum(lengths)]),
         t,
     )
@@ -750,8 +752,20 @@ def bezier(
 
 
 def capsule_chain(points, radius=10, k=0):
+    lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
+    cumlengths = np.hstack([0, np.cumsum(lengths)])
+    relcumlengths = cumlengths / lengths.sum()
     return union(
-        *[capsule(p1, p2, radius=radius) for p1, p2 in zip(points[0:-1], points[1:])],
+        *[
+            capsule(
+                p1,
+                p2,
+                radius=(radius[a:b] if isinstance(radius, ease.Easing) else radius),
+            )
+            for p1, p2, a, b in zip(
+                points[0:-1], points[1:], relcumlengths[0:-1], relcumlengths[1:]
+            )
+        ],
         k=k,
     )
 
