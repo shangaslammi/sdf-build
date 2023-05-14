@@ -6,15 +6,44 @@ Documentation of the new features is lacking entirely 😅
 
 Here is a rough list:
 
-- `sdf.ease` go a huge revamp - easings can now be manipulated and combined easily:
+- `sdf.ease` got a huge revamp - easings can now be manipulated and combined easily:
     ```python
-    ease.linear.plot() # show what it looks like
+    ease.linear.plot()             # show what it looks like
     ease.Easing.plot(ease.linear, ease.in_cubic, ease.smoothstep) # show multiple for comparison
     3 * ease.linear.symmetric + 1  # This makes a triangle starting at 1 and going as high as 4 in the center
-    ease.smoothstep[0.2:0.8] # zoom into function
-    # etc, much more ...
+    ease.smoothstep[0.2:0.8]       # zoom into function
+    ease.linear + ease.in_sine     # add or multiply functions
+    ease.linear.append(ease.in_cubic.reverse) # stitch functions together
+    # etc, much more, try 'python -m sdf.ease' for a non-comprehensive overview
     ```
+- New objects:
+    - There's now `bezier()`-curves! 🥳
+        - their width can even be modulated with an easing function (https://fosstodon.org/@nobodyinperson/110367790398144919)
+    - There's now `Thread()`s 🔩
+        - just a twisted offset infinite cylinder, very nice to 3D print due to the smoothness
+        - `sphere(10)-Thread().dilate(0.4)` makes a nice thread hole with tolerance
+        - `Screw()` with head for convenience
+- New operations:
+    - `mirror()` an object at an arbitrary point into an any direction
+    - `stretch()` an object from here to there
+    - `modulate_between()`: modify an object's thickness between two points with an easing function
+    - finding boundaries/closest surface points/intersections via optimization of the SDF
+    - `shell()` can now also do inner and outer shell, not just around boundary
+- Many usability fixes here and there
+    - `save()` now optionally shows the mesh with `pyvista` (useful in Notebooks)
+    - docstrings are shown properly in interactive Python shells
+    - `k()` now creates a copy and doesn't modify the object itself
 
+
+Some things on my TODO list:
+
+- [ ] proper PyPI upload
+- [ ] add tests!
+- [ ] auto-generated sphinx documentation
+    - [ ] auto-generated examples with code besides renders
+- [ ] importing SVGs 🤔
+- [ ] exporting SVGs (with marching squares / contourplots for 2D SDFs)
+- [ ] importing STLs 🤔
 
 # sdf
 
