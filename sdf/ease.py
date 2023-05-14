@@ -454,6 +454,12 @@ def in_out_square(t):
     return np.heaviside(t - 0.5, 0)
 
 
+@Easing.function
+def smoothstep(t):
+    t = np.clip(t, 0, 1)
+    return 3 * t * t - 2 * t * t * t
+
+
 def _main():
     import matplotlib.pyplot as plt
     from cycler import cycler
