@@ -10,7 +10,7 @@ import numpy as np
 
 
 @dataclass
-class UnitFunction:
+class Easing:
     """
     A function defined on the interval [0;1]
     """
@@ -99,7 +99,7 @@ class UnitFunction:
         """
         Scale function by ``factor``
         """
-        if isinstance(factor, UnitFunction):
+        if isinstance(factor, Easing):
             return lambda t: self(t) * factor(t)
         else:
             return lambda t: factor * self.f(t)
@@ -109,7 +109,7 @@ class UnitFunction:
         """
         Add ``offset`` to function
         """
-        if isinstance(offset, UnitFunction):
+        if isinstance(offset, Easing):
             return lambda t: self(t) + offset(t)
         else:
             return lambda t: self.f(t) + offset
@@ -213,7 +213,7 @@ class UnitFunction:
             ax_ = ax
         t = np.linspace(0, 1, 1000)
         funs = list(others or [])
-        if isinstance(self, UnitFunction):
+        if isinstance(self, Easing):
             funs.insert(0, self)
         for f in funs:
             ax_.plot(t, f(t), label=getattr(f, "name", getattr(f, "__name__", str(f))))
@@ -224,14 +224,6 @@ class UnitFunction:
 
     def __call__(self, t):
         return self.f(t)
-
-
-class Easing(UnitFunction):
-    """
-    A function mapping the interval [0;1] to [0;1]
-    """
-
-    pass
 
 
 @Easing.function
