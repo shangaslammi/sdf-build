@@ -161,10 +161,18 @@ class Easing:
         return lambda t: self.f(f(t))
 
     @modifier
-    def zoom(self, left, right):
+    def zoom(self, left, right=None):
         """
         Arrange so that the interval [left;right] is moved into [0;1]
+        If only one argument is given, zoom in/out by moving edges that far.
         """
+        if left is not None and right is None:
+            if left >= 0.5:
+                raise ValueError(
+                    f"{left = } is > 0.5 which doesn't make sense (bounds would cross)"
+                )
+            left = left
+            right = 1 - left
         if left >= right:
             raise ValueError(f"{right = } bound must be greater than {left = }")
         return self.chain(linear.between(left, right)).f
