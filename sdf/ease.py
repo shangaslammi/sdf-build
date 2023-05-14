@@ -152,10 +152,12 @@ class UnitFunction:
             )
 
     @modifier
-    def chain(self, f):
+    def chain(self, f=None):
         """
         Feed parameter through the given function before evaluating this function.
         """
+        if f is None:
+            f = self.f
         return lambda t: self.f(f(t))
 
     @modifier
