@@ -141,6 +141,32 @@ class UnitFunction:
     def __lshift__(self, offset):
         return self.shift(offset)
 
+    def __getitem__(self, index):
+        if isinstance(index, Easing):
+            return self.chain(index)
+        if isinstance(index, slice):
+            return self.zoom(index.start, index.stop)
+        else:
+            raise ValueError(
+                f"{index = } has to be slice of floats or an easing function"
+            )
+
+    @modifier
+    def chain(self, f):
+        """
+        Feed parameter through the given function before evaluating this function.
+        """
+        return lambda t: self.f(f(t))
+
+    @modifier
+    def zoom(self, left, right):
+        """
+        Arrange so that the interval [left;right] is moved into [0;1]
+        """
+        if left >= right:
+            raise ValueError(f"{right = } bound must be greater than {left = }")
+        return self.chain(linear.between(left, right)).f
+
     @modifier
     def between(self, left=0, right=1, e=None):
         """
