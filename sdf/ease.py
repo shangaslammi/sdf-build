@@ -81,6 +81,16 @@ class Easing:
         return lambda t: np.clip(self.f(t), min, max)
 
     @modifier
+    def clip_input(self, min=None, max=None):
+        """
+        Clip input parameter, i.e. extrapolate constantly outside the interval.
+        """
+        if min is None and max is None:
+            min = 0
+            max = 1
+        return lambda t: self.f(np.clip(t, min, max))
+
+    @modifier
     def append(self, other, e=None):
         """
         Append another easing function and squish both into the [0;1] interval
