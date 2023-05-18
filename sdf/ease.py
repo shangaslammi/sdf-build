@@ -90,6 +90,14 @@ class Easing:
             max = 1
         return lambda t: self.f(np.clip(t, min, max))
 
+    @property
+    @modifier
+    def clipped(self):
+        """
+        Clipped parameter and result to [0;1]
+        """
+        return lambda t: np.clip(self(np.clip(t, 0, 1)), 0, 1)
+
     @modifier
     def append(self, other, e=None):
         """
