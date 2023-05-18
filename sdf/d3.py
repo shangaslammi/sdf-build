@@ -308,7 +308,7 @@ class SDF3:
 
     def save(self, path="out.stl", openscad=False, plot=True, **kwargs):
         mesh.save(path, self, **{**dict(samples=2**18), **kwargs})
-        print(f"Saved mesh to {path!r}")
+        print(f"💾 Saved mesh to {path!r}")
         if openscad:
             with open((p := f"{path}.scad"), "w") as fh:
                 fh.write(
@@ -316,12 +316,15 @@ class SDF3:
         import("{path}");
                 """.strip()
                 )
-                print(f"Saved OpenSCAD viewer script to {p!r}")
+                print(f"💾 Saved OpenSCAD viewer script to {p!r}")
         if plot:
+            plotter = pv.Plotter()
+            plotter.enable_parallel_projection()
             m = pv.read(path)
+            plotter.add_mesh(m)
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=UserWarning)
-                return m.plot()
+                plotter.show()
 
     def show_slice(self, *args, **kwargs):
         return mesh.show_slice(self, *args, **kwargs)
