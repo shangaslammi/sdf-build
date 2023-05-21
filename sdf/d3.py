@@ -815,6 +815,13 @@ def Screw(
     return head | (thread & slab(z0=0) & slab(z1=length).k(k_tip)).k(k_head)
 
 
+def RegularPolygonColumn(n, r=1):
+    ri = r * np.cos(np.pi / n)
+    return intersection(
+        *[slab(x1=ri).rotate(a) for a in np.arange(0, 2 * np.pi, 2 * np.pi / n)]
+    )
+
+
 # Positioning
 
 

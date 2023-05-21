@@ -210,6 +210,13 @@ def rounded_x(w, r):
     return f
 
 
+def RegularPolygon(n, r=1):
+    ri = r * np.cos(np.pi / n)
+    return intersection(
+        *[slab(x1=ri).rotate(a) for a in np.arange(0, 2 * np.pi, 2 * np.pi / n)]
+    )
+
+
 @sdf2
 def polygon(points):
     points = [np.array(p) for p in points]
