@@ -818,7 +818,7 @@ def Screw(
 def RegularPolygonColumn(n, r=1):
     ri = r * np.cos(np.pi / n)
     return intersection(
-        *[slab(x1=ri).rotate(a) for a in np.arange(0, 2 * np.pi, 2 * np.pi / n)]
+        *[slab(y0=-ri).rotate(a, Z) for a in np.arange(0, 2 * np.pi, 2 * np.pi / n)]
     )
 
 
