@@ -736,7 +736,7 @@ def bezier(
             callable taking a number within [0;1] and returning a radius, e.g.
             the easing function :any:`ease.linear` or
             ``radius=ease.linear.between(10,2)`` for a linear transition
-            between radii. (not yet implemented)
+            between radii.
         k (float or None): handed to :any:`capsule_chain`
     """
     points = bezier_via_lerp(p1, p2, p3, p4, (t := np.linspace(0, 1, steps)))
@@ -745,7 +745,7 @@ def bezier(
         radius = ease.constant(radius)
     # TODO: better steps taking curvature and changing radius into account
     t_eq = np.interp(
-        np.arange(0, lengths.sum() + radius.mean / 4, radius.mean / 2),
+        np.arange(0, lengths.sum() + radius.mean / 4, radius.mean / 4),
         # np.linspace(0, lengths.sum(), steps),
         np.hstack([0, np.cumsum(lengths)]),
         t,
