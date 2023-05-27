@@ -48,6 +48,8 @@
 > - [ ] importing STLs 🤔
 > 
 
+[![coverage report](https://gitlab.com/nobodyinperson/sdf/badges/master/coverage.svg)](https://gitlab.com/nobodyinperson/sdf/-/pipelines)
+
 # sdf
 
 Generate 3D meshes based on SDFs (signed distance functions) with a
