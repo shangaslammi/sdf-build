@@ -15,10 +15,9 @@ setup(
         "scipy",
         "Pillow",
         "rich",
-        "trame",
-        "pyvista",
         "pint",
     ],
+    extras_require={"show": ["trame", "pyvista"]},
     license="MIT",
     classifiers=(
         "Development Status :: 3 - Alpha",
