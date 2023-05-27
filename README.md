@@ -104,13 +104,21 @@ following the directions below.
 - scikit-image
 - scipy
 
-## Installation
+## 📥 Installation
 
 Use the commands below to clone the repository and install the `sdf` library
 in a Python virtualenv.
 
+Quick install with `pip`:
+
 ```bash
-git clone https://github.com/fogleman/sdf.git
+pip install git+https://gitlab.com/nobodyinperson/sdf
+```
+
+In a virtualenv:
+
+```bash
+git clone https://gitlab.com/nobodyinperson/sdf
 cd sdf
 virtualenv env
 . env/bin/activate
