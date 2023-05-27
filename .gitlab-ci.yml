@@ -1,0 +1,84 @@
+include:
+    # Python black and PEP8 code style check
+    - "https://gitlab.com/nobodyinperson/ci-templates/raw/master/python-black-pep8.yml"
+    # PyPI upload
+    - "https://gitlab.com/nobodyinperson/ci-templates/raw/master/pypi-upload.yml"
+
+image: python:latest
+
+variables:
+    COVERAGE_STATIC_DIR: coverage-report
+    PAGES_DIR: public
+
+stages:
+    - test
+    - build
+    - deploy
+
+coverage:python:latest:
+    stage: test
+    image: python:latest
+    script:
+        - pip install coveralls .
+        - "PACKAGE_NAME=`python3 -c 'from setuptools import find_packages;print(find_packages(exclude=[\"tests\"])[0])'`"
+        - coverage run --source="$PACKAGE_NAME" -m unittest -v
+        - coverage html
+        - coverage report
+        - mv htmlcov/ "$COVERAGE_STATIC_DIR"
+    coverage: '/TOTAL.*\s+(\d+\%)/'
+    artifacts:
+        paths:
+            - $COVERAGE_STATIC_DIR
+        expire_in: 1 week
+
+python-black-pep8:
+    variables:
+      BLACK_FLAGS: --exclude=/docs/
+      PYCODESTYLE_FLAGS: --exclude=docs/*
+    stage: test
+
+dist:
+    stage: build
+    dependencies: [] # no other artifacts needed
+    needs: [] # job can start right away
+    script:
+        - python3 setup.py sdist
+    artifacts:
+        paths:
+            - dist/*
+        expire_in: 1 week
+
+pypi-upload:
+    stage: deploy
+    environment:
+        name: Python Package Index
+        url: https://pypi.org/project/parmesan/
+    dependencies:
+        - dist
+    only:
+        - main
+    only:
+        - tags
+
+pages:
+    image: alpine
+    variables:
+        GIT_STRATEGY: none
+    before_script: [] # no need to install anything for deployment
+    stage: deploy
+    environment:
+        name: GitLab Pages
+        url: https://tue-umphy.gitlab.io/software/parmesan
+    dependencies:
+        - coverage:python:latest
+    script:
+        - rm -rf $PAGES_DIR/ # make sure there is no pages dir
+        - mv $COVERAGE_STATIC_DIR $PAGES_DIR/ # put coverage report inside
+    artifacts:
+        paths:
+            - $PAGES_DIR/
+    only:
+        - main
+    only:
+        - tags
+

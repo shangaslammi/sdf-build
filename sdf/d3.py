@@ -11,7 +11,6 @@ from . import dn, d2, ease, mesh
 import scipy.optimize
 from scipy.linalg import LinAlgWarning
 import rich.progress
-import pyvista as pv
 
 # Constants
 
@@ -318,6 +317,14 @@ class SDF3:
                 )
                 print(f"💾 Saved OpenSCAD viewer script to {p!r}")
         if plot:
+            try:
+                import pyvista as pv
+            except ImportError as e:
+                print(
+                    f"To use the plotting functionality, "
+                    f"install pyvista and trame (pip install pyvista trame)"
+                )
+                return
             plotter = pv.Plotter()
             plotter.enable_parallel_projection()
             m = pv.read(path)
