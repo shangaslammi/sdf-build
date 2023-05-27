@@ -26,6 +26,7 @@ coverage:python:latest:
         - coverage report
         - coverage xml
         - mv htmlcov/ "$COVERAGE_STATIC_DIR"
+    coverage: '/TOTAL.*\s+(\d+\%)/'
     artifacts:
         paths:
             - $COVERAGE_STATIC_DIR
