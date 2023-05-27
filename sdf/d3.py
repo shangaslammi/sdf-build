@@ -891,6 +891,8 @@ def rotate_to(other, a, b):
 
 @op3
 def orient(other, axis):
+    # quick fix that probably is a problem in rotate_to()
+    axis = axis * np.array([-1, -1, 1])
     return rotate_to(other, UP, axis)
 
 
