@@ -48,7 +48,7 @@
 > - [ ] importing STLs 🤔
 > 
 
-[![coverage report](https://gitlab.com/nobodyinperson/sdf/badges/master/coverage.svg)](https://gitlab.com/nobodyinperson/sdf/-/pipelines)
+[![coverage report](https://gitlab.com/nobodyinperson/sdf/badges/main/coverage.svg)](https://gitlab.com/nobodyinperson/sdf/-/pipelines)
 
 # sdf
 
