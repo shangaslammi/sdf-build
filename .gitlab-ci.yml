@@ -24,12 +24,16 @@ coverage:python:latest:
         - coverage run --source="$PACKAGE_NAME" -m unittest -v
         - coverage html
         - coverage report
+        - coverage xml
         - mv htmlcov/ "$COVERAGE_STATIC_DIR"
-    coverage: '/TOTAL.*\s+(\d+\%)/'
     artifacts:
         paths:
             - $COVERAGE_STATIC_DIR
         expire_in: 1 week
+        reports:
+          coverage_report:
+            coverage_format: cobertura
+            path: coverage.xml
 
 python-black-pep8:
     variables:
