@@ -99,7 +99,12 @@ _max = np.maximum
 
 
 @sdf2
-def circle(radius=1, center=ORIGIN):
+def circle(radius=None, diameter=None, center=ORIGIN):
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
+
     def f(p):
         return _length(p - center) - radius
 
@@ -187,14 +192,20 @@ def equilateral_triangle():
 
 
 @sdf2
-def hexagon(r):
-    r *= 3**0.5 / 2
+def hexagon(radius=None, diameter=None):
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
+    radius *= 3**0.5 / 2
 
     def f(p):
         k = np.array((3**0.5 / -2, 0.5, np.tan(np.pi / 6)))
         p = np.abs(p)
         p -= 2 * k[:2] * _min(_dot(k[:2], p), 0).reshape((-1, 1))
-        p -= _vec(np.clip(p[:, 0], -k[2] * r, k[2] * r), np.zeros(len(p)) + r)
+        p -= _vec(
+            np.clip(p[:, 0], -k[2] * radius, k[2] * radius), np.zeros(len(p)) + radius
+        )
         return _length(p) * np.sign(p[:, 1])
 
     return f

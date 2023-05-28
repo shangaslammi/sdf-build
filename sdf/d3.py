@@ -398,7 +398,12 @@ _max = np.maximum
 
 
 @sdf3
-def sphere(radius=1, center=ORIGIN):
+def sphere(radius=None, diameter=None, center=ORIGIN):
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
+
     def f(p):
         return _length(p - center) - radius
 
@@ -518,7 +523,11 @@ def torus(r1, r2):
 
 
 @sdf3
-def capsule(a, b, radius):
+def capsule(a, b, radius=None, diameter=None):
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
     a = np.array(a)
     b = np.array(b)
     ba = b - a
@@ -535,7 +544,12 @@ def capsule(a, b, radius):
 
 
 @sdf3
-def cylinder(radius):
+def cylinder(radius=None, diameter=None):
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
+
     def f(p):
         return _length(p[:, [0, 1]]) - radius
 
@@ -543,7 +557,12 @@ def cylinder(radius):
 
 
 @sdf3
-def capped_cylinder(a, b, radius):
+def capped_cylinder(a, b, radius=None, diameter=None):
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
+
     a = np.array(a)
     b = np.array(b)
 
@@ -729,7 +748,8 @@ def bezier(
     p2=10 * X,
     p3=10 * Y,
     p4=10 * Z,
-    radius=1,
+    radius=None,
+    diameter=None,
     steps=20,
     k=None,
 ):
@@ -739,17 +759,22 @@ def bezier(
 
     Args:
         p1, p2, p3, p4 (point vectors): the control points. Segment will start at p1 and end at p4.
-        radius (float or callable): either a fixed number as radius or a
-            callable taking a number within [0;1] and returning a radius, e.g.
+        radius,diameter (float or callable): either a fixed number as radius/diameter or a
+            callable taking a number within [0;1] and returning a radius/diameter, e.g.
             the easing function :any:`ease.linear` or
             ``radius=ease.linear.between(10,2)`` for a linear transition
-            between radii.
+            between radii/diameters.
         k (float or None): handed to :any:`capsule_chain`
     """
-    points = bezier_via_lerp(p1, p2, p3, p4, (t := np.linspace(0, 1, steps)))
-    lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
     if isinstance(radius, (float, int)):
         radius = ease.constant(radius)
+    points = bezier_via_lerp(p1, p2, p3, p4, (t := np.linspace(0, 1, steps)))
+    lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
+
     # TODO: better steps taking curvature and changing radius into account
     t_eq = np.interp(
         np.arange(0, lengths.sum() + radius.mean / 4, radius.mean / 4),
@@ -761,7 +786,11 @@ def bezier(
     return capsule_chain(points, radius=radius, k=k)
 
 
-def capsule_chain(points, radius=10, k=0):
+def capsule_chain(points, radius=None, diameter=None, k=0):
+    if (radius is not None) == (diameter is not None):
+        raise ValueError(f"Specify either radius or diameter")
+    if radius is None:
+        radius = diameter / 2
     lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
     cumlengths = np.hstack([0, np.cumsum(lengths)])
     relcumlengths = cumlengths / lengths.sum()
