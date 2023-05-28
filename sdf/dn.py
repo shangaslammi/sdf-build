@@ -136,12 +136,24 @@ def modulate_between(sdf, a, b, e=ease.in_out_cubic):
     return f
 
 
+# TODO: symmetric stretching
 def stretch(sdf, a, b, e=ease.linear):
     """
     Grab the object at point ``a`` and stretch the entire plane to ``b``.
 
     Args:
         a, b (point vectors): the control points
+        e (Easing): easing to apply
+
+    Examples
+    ========
+
+    .. code-block:: python
+
+        # make a capsule
+        sphere(5).stretch(ORIGIN, 10*Z).save() # same as capsule(ORIGIN, 10*Z, 5)
+        # make an egg
+        sphere(5).stretch(ORIGIN, 10*Z, e=ease.smoothstep[:0.44]).save()
     """
     ab = (ab := b - a) / (L := np.linalg.norm(ab))
 
