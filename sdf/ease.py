@@ -184,7 +184,10 @@ class Easing:
         if isinstance(index, Easing):
             return self.chain(index)
         if isinstance(index, slice):
-            return self.zoom(index.start, index.stop)
+            return self.zoom(
+                0 if index.start is None else index.start,
+                1 if index.stop is None else index.stop,
+            )
         else:
             raise ValueError(
                 f"{index = } has to be slice of floats or an easing function"
