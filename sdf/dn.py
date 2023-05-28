@@ -136,13 +136,13 @@ def modulate_between(sdf, a, b, e=ease.in_out_cubic):
     return f
 
 
-# TODO: symmetric stretching
-def stretch(sdf, a, b, e=ease.linear):
+def stretch(sdf, a, b, symmetric=False, e=ease.linear):
     """
     Grab the object at point ``a`` and stretch the entire plane to ``b``.
 
     Args:
         a, b (point vectors): the control points
+        symmetric (bool): also stretch the same into the other direction.
         e (Easing): easing to apply
 
     Examples
@@ -159,8 +159,12 @@ def stretch(sdf, a, b, e=ease.linear):
 
     def f(p):
         # s = ”how far are we between a and b as fraction?”
-        s = np.clip((p - a) @ ab / L, 0, 1)
-        return sdf(p - (e(s) * L * ab[:, np.newaxis]).T)
+        # if symmetric=True this also goes into the negative direction
+        s = np.clip((p - a) @ ab / L, -1 if symmetric else 0, 1)
+        # we return the sdf at a point 'behind' (p minus ...)
+        # the current point, but we go only as far back as the stretch distance
+        # at max
+        return sdf(p - (np.sign(s) * e(abs(s)) * L * ab[:, np.newaxis]).T)
 
     return f
 
