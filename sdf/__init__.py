@@ -1,6 +1,7 @@
 from . import d2, d3, ease
 
 from .util import *
+from .units import units
 
 from .d2 import *
 
@@ -23,7 +24,3 @@ from .mesh import (
 from .stl import (
     write_binary_stl,
 )
-
-import pint
-
-units = pint.UnitRegistry()

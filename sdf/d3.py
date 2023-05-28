@@ -6,6 +6,7 @@ import warnings
 import copy
 
 from . import dn, d2, ease, mesh
+from .units import units
 
 # external modules
 import scipy.optimize
@@ -541,6 +542,25 @@ def capsule(a, b, radius=None, diameter=None):
         return _length(pa - np.multiply(ba, h)) - r(h.reshape(-1))
 
     return f
+
+
+def pieslice(angle, centered=False):
+    """
+    Make a pie slice starting at X axis, rotated ``angle`` in mathematically
+    positive direction. Infinite in Z direction.
+
+    Args:
+        angle: the angle to use
+        centered: center the slice at X axis
+    """
+    angle = angle % units("360°")
+    if angle <= units("180°"):
+        s = plane(Y) & plane(-Y).rotate(angle)
+    else:
+        s = plane(Y) | plane(-Y).rotate(angle)
+    if centered:
+        s = s.rotate(-angle / 2)
+    return s
 
 
 @sdf3
