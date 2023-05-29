@@ -306,7 +306,16 @@ class SDF3:
         )
         return self.translate(distance * direction)
 
-    def save(self, path="out.stl", openscad=False, plot=True, **kwargs):
+    def save(
+        self,
+        path="out.stl",
+        screenshot=False,
+        add_text=None,
+        openscad=False,
+        plot=True,
+        plot_kwargs=None,
+        **kwargs,
+    ):
         mesh.save(path, self, **{**dict(samples=2**18), **kwargs})
         print(f"💾 Saved mesh to {path!r}")
         if openscad:
@@ -330,9 +339,18 @@ class SDF3:
             plotter.enable_parallel_projection()
             m = pv.read(path)
             plotter.add_mesh(m)
+            if add_text:
+                if isinstance(add_text, str):
+                    add_text = dict(text=add_text)
+                plotter.add_text(**add_text)
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=UserWarning)
-                plotter.show()
+                if screenshot:
+                    if not isinstance(screenshot, str):
+                        screenshot = f"{path}.png"
+                    plotter.screenshot(screenshot)
+                    print(f"🖼️ Saved screenshot to {screenshot!r}")
+                plotter.show(**(plot_kwargs or {}))
 
     def show_slice(self, *args, **kwargs):
         return mesh.show_slice(self, *args, **kwargs)
