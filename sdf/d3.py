@@ -306,7 +306,7 @@ class SDF3:
         )
         return self.translate(distance * direction)
 
-    def cut(self, direction=UP, point=ORIGIN, at=None, k=None):
+    def cut(self, direction=UP, point=ORIGIN, at=None, k=None, return_cutouts=False):
         """
         Split an object along a direction and return resulting parts.
 
@@ -317,9 +317,13 @@ class SDF3:
                 ``direction`` starting at ``point``. Defaults to ``[0]``,
                 meaning it only splits at ``point``.
             k (float): passed to :any:`intersection`
+            return_cutouts (bool): whether to return the used cutout masks as
+                second value
+
 
         Returns:
             sequence of SDFs: the parts
+            two sequences of SDFs: the parts and cutouts if ``return_cutouts=True``
         """
         direction = np.array(direction).reshape(3)
         direction = _normalize(direction)
@@ -328,20 +332,25 @@ class SDF3:
             at = [0]
         at = [-np.inf] + list(at) + [np.inf]
         parts = []
+        cutouts = []
         for start, end in zip(at[:-1], at[1:]):
-            cutouts = []
+            cuts = []
             if np.isfinite(start):
-                cutouts.append(plane(normal=direction, point=point + start * direction))
+                cuts.append(plane(normal=direction, point=point + start * direction))
             if np.isfinite(end):
-                cutouts.append(plane(normal=-direction, point=point + end * direction))
-            if len(cutouts) > 1:
-                cutout = intersection(*cutouts)
-            elif len(cutouts) == 1:
-                cutout = cutouts[0]
+                cuts.append(plane(normal=-direction, point=point + end * direction))
+            if len(cuts) > 1:
+                cutout = intersection(*cuts)
+            elif len(cuts) == 1:
+                cutout = cuts[0]
             else:
                 cutout = self
+            cutouts.append(cutout)
             parts.append(intersection(self, cutout, k=k))
-        return parts
+        if return_cutouts:
+            return parts, cutouts
+        else:
+            return parts
 
     def save(
         self,
