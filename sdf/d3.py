@@ -306,6 +306,21 @@ class SDF3:
         )
         return self.translate(distance * direction)
 
+    def cut(other, direction=UP, at=ORIGIN):
+        """
+        Split an object intwo and return both resulting parts.
+
+        Args:
+            direction (3d vector): direction to cut into
+            at (3d vector): point to perform the cut at
+
+        Returns:
+            SDF, SDF: part1 and part2
+        """
+        upper = other & plane(direction, at)
+        lower = other & plane(direction, at).negate()
+        return lower, upper
+
     def save(
         self,
         path="out.stl",
