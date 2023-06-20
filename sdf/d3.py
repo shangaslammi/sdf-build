@@ -306,20 +306,42 @@ class SDF3:
         )
         return self.translate(distance * direction)
 
-    def cut(other, direction=UP, at=ORIGIN):
+    def cut(self, direction=UP, point=ORIGIN, at=None, k=None):
         """
-        Split an object intwo and return both resulting parts.
+        Split an object along a direction and return resulting parts.
 
         Args:
             direction (3d vector): direction to cut into
-            at (3d vector): point to perform the cut at
+            point (3d vector): point to perform the cut at
+            at (sequence of float): where to perform the cuts along the
+                ``direction`` starting at ``point``. Defaults to ``[0]``,
+                meaning it only splits at ``point``.
+            k (float): passed to :any:`intersection`
 
         Returns:
-            SDF, SDF: part1 and part2
+            sequence of SDFs: the parts
         """
-        upper = other & plane(direction, at)
-        lower = other & plane(direction, at).negate()
-        return lower, upper
+        direction = np.array(direction).reshape(3)
+        direction = _normalize(direction)
+        point = np.array(point).reshape(3)
+        if at is None:
+            at = [0]
+        at = [-np.inf] + list(at) + [np.inf]
+        parts = []
+        for start, end in zip(at[:-1], at[1:]):
+            cutouts = []
+            if np.isfinite(start):
+                cutouts.append(plane(normal=direction, point=point + start * direction))
+            if np.isfinite(end):
+                cutouts.append(plane(normal=-direction, point=point + end * direction))
+            if len(cutouts) > 1:
+                cutout = intersection(*cutouts)
+            elif len(cutouts) == 1:
+                cutout = cutouts[0]
+            else:
+                cutout = self
+            parts.append(intersection(self, cutout, k=k))
+        return parts
 
     def save(
         self,
