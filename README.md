@@ -1,6 +1,8 @@
 > # 📢 Note
 > 
 > This is my fork of [fogleman/sdf](https://github.com/fogleman/sdf). This fork is available [on GitHub](https://github.com/nobodyinperson/sdf) (so it's clear where I forked it from) and [on GitLab](https://gitlab.com/nobodyinperson/sdf), where I'll do the deployments, automatic tests and docs at some points.
+>
+> ## 📹 Video: My Talk [OpenSCAD vs PythonSDF (🇩🇪 German) at the Tübix2023 Linux Day](https://odysee.com/@nobodyinperson:6/T%C3%BCbix2023-Yann-B%C3%BCchau-OpenSCAD-vs-PythonSDF:d)
 > 
 > I added so many things that it doesn't really make sense to just open a PR upstream. Probably I'll just maintain my own fork. 
 > 
@@ -536,12 +538,15 @@ f = sphere() & plane()
 
 <img width=128 align="right" src="docs/images/slab.png">
 
-`slab(x0=None, y0=None, z0=None, x1=None, y1=None, z1=None, k=None)`
+```python
+slab(x0=None, y0=None, z0=None, x1=None, y1=None, z1=None, k=None)
+slab(dx=None, dy=None, dz=None) # symmetric version
+```
 
 `slab` is useful for cutting a shape on one or more axis-aligned planes.
 
 ```python
-f = sphere() & slab(z0=-0.5, z1=0.5, x0=0)
+f = sphere() & slab(dz=1, x0=0)
 ```
 
 ### cylinder
