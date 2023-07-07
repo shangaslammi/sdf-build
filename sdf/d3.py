@@ -971,6 +971,10 @@ def scale(other, factor):
 
 @op3
 def rotate(other, angle, vector=Z):
+    try:
+        angle = angle.to("radians").m
+    except AttributeError:
+        pass
     x, y, z = _normalize(vector)
     s = np.sin(angle)
     c = np.cos(angle)
