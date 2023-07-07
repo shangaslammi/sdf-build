@@ -381,7 +381,7 @@ class SDF3:
                     f"install pyvista and trame (pip install pyvista trame)"
                 )
                 return
-            pv.set_jupyter_backend("client")
+            # pv.set_jupyter_backend("client")
             plotter = pv.Plotter()
             plotter.enable_parallel_projection()
             m = pv.read(path)

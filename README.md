@@ -250,6 +250,24 @@ write_binary_stl(path, points)
 
 ## Visualizing the SDF
 
+```python
+# Just use the save() method to show it
+sphere().save(plot=True)
+```
+
+For this you need `pyvista` and `trame`:
+
+```bash
+pip install pyvista trame
+```
+
+In Jupyter, you can try to use client-rendering, which is faster:
+
+```bash
+import pyvista as pv
+pv.set_jupyter_backend("client")
+```
+
 <img width=350 align="right" src="docs/images/show_slice.png">
 
 You can plot a visualization of a 2D slice of the SDF using matplotlib.
