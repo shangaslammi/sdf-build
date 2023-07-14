@@ -22,10 +22,38 @@ class TestRotation(unittest.TestCase):
                     )
 
     def test_rotation_matrix(self):
-        np.testing.assert_allclose(
-            np.dot([1, 0, 0], rotation_matrix(axis=Z, angle=units("90°"))),
-            [0, 1, 0],
-        )
+        for axis, angle, point, rotated in [
+            (Z, units("90°"), [1, 0, 0], [0, 1, 0]),
+            (X, units("90°"), [1, 0, 0], [1, 0, 0]),
+            (Z, units("45°"), [1, 0, 0], [0.707107, 0.707107, 0]),
+            (Y, units("45°"), [1, 0, 0], [0.707107, 0, -0.707107]),
+            (Y, units("-45°"), [1, 0, 0], [0.707107, 0, 0.707107]),
+        ]:
+            with self.subTest(axis=axis, angle=angle, point=point, rotated=rotated):
+                np.testing.assert_allclose(
+                    rotation_matrix(axis=axis, angle=angle) @ np.array(point),
+                    rotated,
+                    err_msg="matrix product with @ does not work",
+                    atol=1e-5,
+                    rtol=1e-5,
+                ),
+                np.testing.assert_allclose(
+                    np.dot(rotation_matrix(axis=axis, angle=angle), np.array(point)),
+                    rotated,
+                    err_msg="dot product does not work",
+                    atol=1e-5,
+                    rtol=1e-5,
+                )
+                np.testing.assert_allclose(
+                    np.dot(
+                        np.array(point),
+                        rotation_matrix(axis=axis, angle=-angle),
+                    ),
+                    rotated,
+                    err_msg="swapped dot product with negative angle does not work",
+                    atol=1e-5,
+                    rtol=1e-5,
+                )
 
 
 class Test3D(unittest.TestCase):
