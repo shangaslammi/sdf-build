@@ -31,6 +31,7 @@
 >     - `mirror()` an object at an arbitrary point into an any direction
 >     - `stretch()` an object from here to there
 >     - `modulate_between()`: modify an object's thickness between two points with an easing function
+>     - `twist_between()`: twist an object between two points with a variable rotation angle specified by an easing function
 >     - finding boundaries/closest surface points/intersections via optimization of the SDF
 >     - `shell()` can now also do inner and outer shell, not just around boundary
 > - Many usability fixes here and there
@@ -843,6 +844,19 @@ f = example.elongate((0.25, 0.5, 0.75))
 
 ```python
 f = box().twist(pi / 2)
+```
+
+### twist_between
+
+<img width=128 align="right" src="docs/images/twist_between.png">
+
+```python
+slab(z0=0, dx=5, dy=20, z1=30,k=2).twist_between(
+    a = 5*Z,     # start to twist here
+    b = 25 * Z,  # stop twisting here
+    # smoothstep funtion between 0° and 80°
+    e=units("80°").to("radians").m * ease.smoothstep
+    ).save()
 ```
 
 ### bend

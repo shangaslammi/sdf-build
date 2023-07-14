@@ -5,6 +5,57 @@ from sdf import *
 import numpy as np
 
 
+class TestRotation(unittest.TestCase):
+    def test_rotation_matrix_roundtrip(self):
+        np.random.seed(42)
+        for angle in np.arange(-360, 360, 45):
+            for axis in np.random.uniform(-10, 10, (10, 3)):
+                with self.subTest(angle=angle, axis=axis):
+                    points = np.random.uniform(-10, 10, (10, 3))
+                    matrix = rotation_matrix(axis=axis, angle=angle)
+                    points_rotated = np.dot(points, matrix)
+                    matrix_back = rotation_matrix(axis=axis, angle=-angle)
+                    rotated_back = np.dot(points_rotated, matrix_back)
+                    self.assertTrue(
+                        np.allclose(rotated_back, points),
+                        "Rotating back and forth changes stuff!",
+                    )
+
+    def test_rotation_matrix(self):
+        for axis, angle, point, rotated in [
+            (Z, units("90°"), [1, 0, 0], [0, 1, 0]),
+            (X, units("90°"), [1, 0, 0], [1, 0, 0]),
+            (Z, units("45°"), [1, 0, 0], [0.707107, 0.707107, 0]),
+            (Y, units("45°"), [1, 0, 0], [0.707107, 0, -0.707107]),
+            (Y, units("-45°"), [1, 0, 0], [0.707107, 0, 0.707107]),
+        ]:
+            with self.subTest(axis=axis, angle=angle, point=point, rotated=rotated):
+                np.testing.assert_allclose(
+                    rotation_matrix(axis=axis, angle=angle) @ np.array(point),
+                    rotated,
+                    err_msg="matrix product with @ does not work",
+                    atol=1e-5,
+                    rtol=1e-5,
+                ),
+                np.testing.assert_allclose(
+                    np.dot(rotation_matrix(axis=axis, angle=angle), np.array(point)),
+                    rotated,
+                    err_msg="dot product does not work",
+                    atol=1e-5,
+                    rtol=1e-5,
+                )
+                np.testing.assert_allclose(
+                    np.dot(
+                        np.array(point),
+                        rotation_matrix(axis=axis, angle=-angle),
+                    ),
+                    rotated,
+                    err_msg="swapped dot product with negative angle does not work",
+                    atol=1e-5,
+                    rtol=1e-5,
+                )
+
+
 class Test3D(unittest.TestCase):
     def test_orient(self):
         directions = set(

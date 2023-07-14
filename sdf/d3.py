@@ -969,25 +969,45 @@ def scale(other, factor):
     return f
 
 
-@op3
-def rotate(other, angle, vector=Z):
+def rotation_matrix(angle, axis=Z):
+    """
+    Euler-Rodriguez Formula for arbitrary-axis rotation:
+
+    https://en.m.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    """
     try:
         angle = angle.to("radians").m
     except AttributeError:
         pass
-    x, y, z = _normalize(vector)
+    x, y, z = _normalize(axis)
     s = np.sin(angle)
     c = np.cos(angle)
     m = 1 - c
-    matrix = np.array(
+    # code moved from mfogleman's rotate() below
+    return np.array(
         [
             [m * x * x + c, m * x * y + z * s, m * z * x - y * s],
             [m * x * y - z * s, m * y * y + c, m * y * z + x * s],
             [m * z * x + y * s, m * y * z - x * s, m * z * z + c],
         ]
     ).T
+    # Alternative matrix construction (slightly slower than the above):
+    # kx, ky, kz = _normalize(axis)
+    # K = np.array([[0, -kz, ky], [kz, 0, -kx], [-ky, kx, 0]])
+    # return np.identity(3) + np.sin(angle) * K + (1 - np.cos(angle)) * (K @ K)
+    # Using np.linalg.matrix_power(K,2) is not faster
+
+
+@op3
+def rotate(other, angle, vector=Z):
+    matrix = rotation_matrix(axis=vector, angle=angle)
 
     def f(p):
+        # np.dot(p, matrix) actually rotates *backwards*,
+        # (matrix @ p) or np.dot(matrix,p) would rotate
+        # forwards but that doesn't work with the shapes here.
+        # In this case, rotating backwards is actually what we want:
+        # we want to inverse the rotation to look up the SDF there
         return other(np.dot(p, matrix))
 
     return f
@@ -1060,6 +1080,36 @@ def twist(other, k):
         y2 = s * x + c * y
         z2 = z
         return other(_vec(x2, y2, z2))
+
+    return f
+
+
+@op3
+def twist_between(sdf, a, b, e=ease.in_out_cubic(2 * np.pi)):
+    """
+    Twist an object between two control points
+
+    Args:
+        a, b (vectors): the two control points
+        e (scalar function): the angle to rotate, will be called with
+            values between 0 (at control point ``a``) and 1 (at control point
+            ``b``).  Its result will be used as rotation angle in radians.
+    """
+
+    # unit vector from control point a to b
+    ab = (ab := b - a) / (L := np.linalg.norm(ab))
+
+    def f(p):
+        # project current point onto control direction, clip and apply easing
+        angle = e(np.clip((p - a) @ ab / L, 0, 1))
+        # move to origin ”-a”, then rotate, then move back ”+a”
+        # create many rotation matrices (along 3rd dim) for all angles
+        matrix = rotation_matrix(axis=ab, angle=-angle)
+        # apply rotation matrix to points moved back to origin
+        # (this is a slow Python loop, I wonder how to optmize this 🤔)
+        rotated = np.array([m @ p for p, m in zip((p - a), matrix)])
+        # move rotated points back to where they were
+        return sdf(rotated + a)
 
     return f
 
