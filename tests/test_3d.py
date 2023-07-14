@@ -5,6 +5,29 @@ from sdf import *
 import numpy as np
 
 
+class TestRotation(unittest.TestCase):
+    def test_rotation_matrix_roundtrip(self):
+        np.random.seed(42)
+        for angle in np.arange(-360, 360, 45):
+            for axis in np.random.uniform(-10, 10, (10, 3)):
+                with self.subTest(angle=angle, axis=axis):
+                    points = np.random.uniform(-10, 10, (10, 3))
+                    matrix = rotation_matrix(axis=axis, angle=angle)
+                    points_rotated = np.dot(points, matrix)
+                    matrix_back = rotation_matrix(axis=axis, angle=-angle)
+                    rotated_back = np.dot(points_rotated, matrix_back)
+                    self.assertTrue(
+                        np.allclose(rotated_back, points),
+                        "Rotating back and forth changes stuff!",
+                    )
+
+    def test_rotation_matrix(self):
+        np.testing.assert_allclose(
+            np.dot([1, 0, 0], rotation_matrix(axis=Z, angle=units("90°"))),
+            [0, 1, 0],
+        )
+
+
 class Test3D(unittest.TestCase):
     def test_orient(self):
         directions = set(

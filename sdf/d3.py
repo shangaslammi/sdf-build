@@ -969,23 +969,32 @@ def scale(other, factor):
     return f
 
 
-@op3
-def rotate(other, angle, vector=Z):
+def rotation_matrix(angle, axis=Z):
+    """
+    Euler-Rodriguez Formula for arbitrary-axis rotation:
+
+    https://en.m.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    """
     try:
         angle = angle.to("radians").m
     except AttributeError:
         pass
-    x, y, z = _normalize(vector)
+    x, y, z = _normalize(axis)
     s = np.sin(angle)
     c = np.cos(angle)
     m = 1 - c
-    matrix = np.array(
+    return np.array(
         [
             [m * x * x + c, m * x * y + z * s, m * z * x - y * s],
             [m * x * y - z * s, m * y * y + c, m * y * z + x * s],
             [m * z * x + y * s, m * y * z - x * s, m * z * z + c],
         ]
     ).T
+
+
+@op3
+def rotate(other, angle, vector=Z):
+    matrix = rotation_matrix(axis=vector, angle=angle)
 
     def f(p):
         return other(np.dot(p, matrix))
