@@ -229,16 +229,20 @@ class SDF3:
 
     def distance_to_plane(self, origin, normal, return_point=False):
         """
-        Find the (minimum) distance to a plane around an ``origin`` that points
+        Find the (minimum) SDF distance (not necessarily real distance if you
+        have non-uniform scaling!) to a plane around an ``origin`` that points
         into the ``normal`` direction.
 
         Args:
             origin (3d vector): a point on the plane
             normal (3d vector): normal vector of the plane
+            return_point (bool): whether to also return the closest point (on
+                the plane!)
 
         Returns:
             float: the (minimum) distance to the plane
-            float, 3d vector : distance and closest point if ``return_point=True``
+            float, 3d vector : distance and closest point (on the plane!) if
+                ``return_point=True``
         """
         basemat = np.array(
             [(e1 := _perpendicular(normal)), (e2 := np.cross(normal, e1))]
@@ -281,6 +285,49 @@ class SDF3:
             return best_min.fun, closest_point
         else:
             return best_min.fun
+
+    def extent_in(self, direction):
+        """
+        Determine the largest distance from the origin in a given ``direction``
+        that's still within the object.
+
+        Args:
+            direction (3d vector): the direction to check
+
+        Returns:
+            float: distance from origin
+        """
+        # create probing points along direction to check where object ends roughly
+        # object ends when SDF is only increasing (not the case for infinite repetitions e.g.)
+        probing_points = np.expand_dims(np.logspace(0, 9, 30), axis=1) * direction
+        d = self.f(probing_points)  # get SDF value at probing points
+        order = (d[1:] > d[:-1]) & (
+            d[:-1] > 0
+        )  # is the next element larger than previous and positive?
+        # TODO: Not happy at all with this if/else mess. Is there no easier way to find the
+        #       index in a numpy array after which the values are only ascending? 🤔
+        if np.all(order):  # all ascending
+            n_trailing_ascending = d.size
+        elif np.all(~order):  # none ascending
+            n_trailing_ascending = 0
+        else:  # count from end how many are ascending
+            n_trailing_ascending = np.argmin(order[::-1]) + 1
+        if (ratio := n_trailing_ascending / d.size) < 0.5:
+            warnings.warn(
+                f"extent_in({direction = !r}): "
+                f"Only {ratio*100:.1f}% of probed points in "
+                f"{direction = } have ascending SDF distance values. "
+                f"This can be caused by infinite objects. "
+                f"Result of might be wrong. "
+            )
+        faraway = probing_points[
+            -n_trailing_ascending
+        ]  # choose first point after which SDF only increases
+        closest_surface_point = self.closest_surface_point_to_plane(
+            origin=faraway, normal=direction
+        )
+        extent = np.linalg.norm(closest_surface_point)
+        return extent
 
     def closest_surface_point_to_plane(self, origin, normal):
         """
