@@ -321,7 +321,7 @@ class SDF3:
                 f"Result of might be wrong. "
             )
         faraway = probing_points[
-            -n_trailing_ascending
+            -n_trailing_ascending + 1
         ]  # choose first point after which SDF only increases
         closest_surface_point = self.closest_surface_point_to_plane(
             origin=faraway, normal=direction
