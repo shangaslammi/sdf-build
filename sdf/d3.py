@@ -5,6 +5,8 @@ import operator
 import warnings
 import copy
 
+# internal modules
+from .util import alpha_quality
 from . import dn, d2, ease, mesh
 from .units import units
 
@@ -65,6 +67,7 @@ class SDF3:
     def generate(self, *args, **kwargs):
         return mesh.generate(self, *args, **kwargs)
 
+    @alpha_quality
     def closest_surface_point(self, point):
         def distance(p):
             # root() wants same input/output dims (yeah...)
@@ -142,6 +145,7 @@ class SDF3:
                 )
         return closest_point
 
+    @alpha_quality
     def surface_intersection(self, start, direction=None):
         """
         ``start`` at a point, move (back or forth) along a line following a
@@ -227,6 +231,7 @@ class SDF3:
                 )
         return closest_point
 
+    @alpha_quality
     def distance_to_plane(self, origin, normal, return_point=False):
         """
         Find the (minimum) SDF distance (not necessarily real distance if you
@@ -286,6 +291,7 @@ class SDF3:
         else:
             return best_min.fun
 
+    @alpha_quality
     def extent_in(self, direction):
         """
         Determine the largest distance from the origin in a given ``direction``
@@ -329,6 +335,7 @@ class SDF3:
         extent = np.linalg.norm(closest_surface_point)
         return extent
 
+    @alpha_quality
     def closest_surface_point_to_plane(self, origin, normal):
         """
         Find the closest surface point to a plane around an ``origin`` that points
@@ -346,12 +353,9 @@ class SDF3:
         )
         return self.surface_intersection(start=plane_point, direction=normal)
 
+    @alpha_quality
     def move_to_positive(self, direction=Z):
-        very_much = 1e9
-        distance = very_much - self.distance_to_plane(
-            origin=-very_much * direction, normal=direction
-        )
-        return self.translate(distance * direction)
+        return self.translate(self.extent_in(-direction) * direction)
 
     def cut(self, direction=UP, point=ORIGIN, at=None, k=None, return_cutouts=False):
         """
