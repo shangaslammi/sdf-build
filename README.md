@@ -1,6 +1,7 @@
 > # 📢 Note
 > 
-> This is my fork of [fogleman/sdf](https://github.com/fogleman/sdf). This fork is available [on GitHub](https://github.com/nobodyinperson/sdf) (so it's clear where I forked it from) and [on GitLab](https://gitlab.com/nobodyinperson/sdf), where I'll do the deployments, automatic tests and docs at some points.
+> This is my fork of [fogleman/sdf](https://github.com/fogleman/sdf). This fork is available [on GitHub](https://github.com/nobodyinperson/sdf) (so it's clear where I forked it from) and [on GitLab](https://gitlab.com/nobodyinperson/sdf), where I'll do the deployments, automatic tests and docs at some point.
+> See [here](https://gitlab.com/nobodyinperson/sdfcad/-/compare/348d1c49...main?from_project_id=45731219&straight=false) for a an effective diff since forking.   
 >
 > ## 📹 Video: My Talk [OpenSCAD vs PythonSDF (🇩🇪 German) at the Tübix2023 Linux Day](https://odysee.com/@nobodyinperson:6/T%C3%BCbix2023-Yann-B%C3%BCchau-OpenSCAD-vs-PythonSDF:d)
 > 
