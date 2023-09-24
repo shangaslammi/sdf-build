@@ -32,6 +32,7 @@
 >     - `stretch()` an object from here to there
 >     - `modulate_between()`: modify an object's thickness between two points with an easing function
 >     - `twist_between()`: twist an object between two points with a variable rotation angle specified by an easing function
+>     - `chamfer()`: chamfer along a plane
 >     - finding boundaries/closest surface points/intersections via optimization of the SDF
 >     - `shell()` can now also do inner and outer shell, not just around boundary
 > - Many usability fixes here and there
@@ -857,6 +858,14 @@ slab(z0=0, dx=5, dy=20, z1=30,k=2).twist_between(
     # smoothstep funtion between 0° and 80°
     e=units("80°").to("radians").m * ease.smoothstep
     ).save()
+```
+
+### chamfer
+
+<img width=128 align="right" src="docs/images/chamfer-sphere.png">
+
+```python
+sphere(10).chamfer(2,at=ORIGIN, direction=-Z).save()
 ```
 
 ### bend
