@@ -403,6 +403,23 @@ class SDF3:
         else:
             return parts
 
+    def chamfer(self, size, at=ORIGIN, direction=Z, e=ease.linear):
+        """
+        Chamfer (and then cut) an object along a plane
+
+        Args:
+            size (float): size to chamfer along ``direction``.
+            at (3d point): A point on the plane where to chamfer at. Defaults
+                to ORIGIN.
+            direction (3d vector): direction to chamfer to. Defaults to Z.
+            e (ease.Easing): the easing to use. Will be scaled with ``size``.
+        """
+        direction = direction / np.linalg.norm(direction)
+        result = self.stretch(at, at - size * direction)
+        result = result.modulate_between(at + size * direction, at, e=-size * e)
+        result &= plane(direction, point=at)
+        return result
+
     def save(
         self,
         path="out.stl",
