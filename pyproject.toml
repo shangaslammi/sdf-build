@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "sdfcad"
+version = "0.1.0"
+description = "Simple 3D mesh generation with Python based on signed distance functions"
+authors = ["Yann Büchau <nobodyinperson@posteo.de>","Michael Fogleman <michael.fogleman@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+matplotlib = "^3.8.0"
+meshio = "^5.3.4"
+numpy = "^1"
+scikit-image = ">=0.17"
+scipy = "^1"
+Pillow = "^10.0.1"
+rich = "^13.5.3"
+Pint = "^0.22"
+
+[tool.poetry.extras]
+show = ["trame","pyvista"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
