@@ -860,9 +860,21 @@ slab(z0=0, dx=5, dy=20, z1=30,k=2).twist_between(
     ).save()
 ```
 
+### modulate_between
+
+<img width=128 align="right" src="docs/images/modulate-between.png">
+
+Modulate the thickness between two points.
+
+```python
+(cylinder(10)&slab(dz=50)).modulate_between(-20*Z, 20*Z, e=-5 * ease.smoothstep.symmetric).save()
+```
+
 ### chamfer
 
 <img width=128 align="right" src="docs/images/chamfer-sphere.png">
+
+This is a wrapper around `stretch()` and `modulate_between()` to facilitate a chamfer cut along a plane.
 
 ```python
 sphere(10).chamfer(2,at=ORIGIN, direction=-Z).save()
