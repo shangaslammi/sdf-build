@@ -867,7 +867,14 @@ slab(z0=0, dx=5, dy=20, z1=30,k=2).twist_between(
 Modulate the thickness between two points.
 
 ```python
-(cylinder(10)&slab(dz=50)).modulate_between(-20*Z, 20*Z, e=-5 * ease.smoothstep.symmetric).save()
+# make a cylinder
+(cylinder(10) & slab(dz=50)).modulate_between(
+    -20 * Z, # start modulating here
+    20 * Z,  # stop  modulating here
+    # easing to apply.
+    # symmetric smoothstep function for negative dip.
+    e=-5 * ease.smoothstep.symmetric,
+).save()
 ```
 
 ### chamfer
