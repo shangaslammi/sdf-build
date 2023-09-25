@@ -12,7 +12,7 @@
     ]);
   profile = ''
     # create and fill virtual environment
-    poetry install --with=dev
+    poetry install --all-extras --with=dev
     # enter virtual environment
     source "$(poetry env info --path)"/bin/activate
     # Don't store notebook outputs

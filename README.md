@@ -117,17 +117,19 @@ in a Python virtualenv.
 Quick install with `pip`:
 
 ```bash
-pip install git+https://gitlab.com/nobodyinperson/sdf
+# together with the dependencies to run within Jupyter
+pip install 'sdfcad[jupyter] @ git+https://gitlab.com/nobodyinperson/sdfCAD'
+# for headless operation
+pip install git+https://gitlab.com/nobodyinperson/sdfCAD
 ```
 
-In a virtualenv:
+To hack on:
 
 ```bash
-git clone https://gitlab.com/nobodyinperson/sdf
-cd sdf
-virtualenv env
-. env/bin/activate
-pip install -e .
+git clone https://gitlab.com/nobodyinperson/sdfCAD
+cd sdfCAD
+poetry install --all-extras --with=dev
+poetry shell # enter a shell in the virtual environment
 ```
 
 Confirm that it works:
@@ -135,9 +137,6 @@ Confirm that it works:
 ```bash
 python examples/example.py # should generate a file named out.stl
 ```
-
-You can skip the installation if you always run scripts that import `sdf`
-from the root folder.
 
 ## File Formats
 
@@ -147,27 +146,20 @@ including OBJ, PLY, VTK, and many more.
 
 ## Viewing the Mesh
 
-<img width=250 align="right" src="docs/images/meshview.png">
+<img width=250 align="right" src="docs/images/sdfCAD-octopus-in-Jupyter.png">
 
-Find and install a 3D mesh viewer for your platform, such as [MeshLab](https://www.meshlab.net/).
-
-I have developed and use my own cross-platform mesh viewer called [meshview](https://github.com/fogleman/meshview) (see screenshot).
-Installation is easy if you have [Go](https://golang.org/) and [glfw](https://www.glfw.org/) installed:
+sdfCAD is best worked with in [Jupyter](https://jupyter.org) Lab:
 
 ```bash
-$ brew install go glfw # on macOS with homebrew
-$ go get -u github.com/fogleman/meshview/cmd/meshview
+# launch jupyter lab, this should open your browser with Jupyter Lab
+jupyter lab
 ```
 
-Then you can view any mesh from the command line with:
+Alternatively, you can just `.save()` your object and open the resulting file in your Mesh viewer of choice, e.g.:
 
-```bash
-$ meshview your-mesh.stl
-```
-
-See the meshview [README](https://github.com/fogleman/meshview) for more complete installation instructions.
-
-On macOS you can just use the built-in Quick Look (press spacebar after selecting the STL file in Finder) in a pinch.
+- [MeshLab](https://www.meshlab.net/)
+- [OpenSCAD](https://openscad.org) (`save(openscad=True)` creates a `.scad` file you can open. OpenSCAD can also auto-reload if the file changes.)
+- Michael Fogleman's [meshview](https://github.com/fogleman/meshview)
 
 # API
 
@@ -253,15 +245,11 @@ write_binary_stl(path, points)
 
 ## Visualizing the SDF
 
+The `save()` method automatically shows the object with `pyvista` if available (e.g. when you installed with the `jupyter` extra as described above).
+
 ```python
-# Just use the save() method to show it
-sphere().save(plot=True)
-```
-
-For this you need `pyvista` and `trame`:
-
-```bash
-pip install pyvista trame
+# Turn automatic plot visualization off with this:
+sphere().save(plot=False)
 ```
 
 In Jupyter, you can try to use client-rendering, which is faster:
