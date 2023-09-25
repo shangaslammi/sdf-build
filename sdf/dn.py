@@ -169,6 +169,35 @@ def stretch(sdf, a, b, symmetric=False, e=ease.linear):
     return f
 
 
+def shear(sdf, fix, grab, move, e=ease.linear):
+    """
+    Grab the object at point ``grab`` and shear the entire plane in direction
+    ``move``, keeping point ``fix`` in place. If ``move`` is orthogonal to the
+    direction ``fix``->``grab``, then this operation is a shear.
+
+    Args:
+        fix, grab (point vectors): the control points
+        move (point vector): direction to shear to
+        e (Easing): easing to apply
+
+    Examples
+    ========
+
+    .. code-block:: python
+
+        # make a capsule
+        box([20,10,50]).shear(fix=-15*Z, grab=15*Z, move=-5*X, e=ease.smoothstep)
+    """
+    ab = (ab := grab - fix) / (L := np.linalg.norm(ab))
+
+    def f(p):
+        # s = ”how far are we between a and b as fraction?”
+        s = (p - fix) @ ab / L
+        return sdf(p - move * np.expand_dims(e(np.clip(s, 0, 1)), axis=1))
+
+    return f
+
+
 def mirror(other, direction, at=0):
     """
     Mirror around a given plane defined by ``origin`` reference point and

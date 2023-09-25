@@ -31,6 +31,7 @@
 > - New operations:
 >     - `mirror()` an object at an arbitrary point into an any direction
 >     - `stretch()` an object from here to there
+>     - `shear()` an object from between two points along a direction
 >     - `modulate_between()`: modify an object's thickness between two points with an easing function
 >     - `twist_between()`: twist an object between two points with a variable rotation angle specified by an easing function
 >     - `chamfer()`: chamfer along a plane
@@ -67,7 +68,7 @@ Special thanks to [Inigo Quilez](https://iquilezles.org/) for his excellent docu
 
 ## Example
 
-<img width=350 align="right" src="docs/images/example.png">
+<img width=350 align="right" src="docs/images/csg-canonical.png">
 
 Here is a complete example that generates the model shown. This is the
 canonical [Constructive Solid Geometry](https://en.wikipedia.org/wiki/Constructive_solid_geometry)
@@ -360,6 +361,31 @@ conditionals wherever applicable. The sky is the limit!
 See the [customizable box example](examples/customizable_box.py) for some starting ideas.
 
 <br clear="right">
+
+## Easings
+
+Many functions in sdfCAD take an optional **easing** parameter `e`. 
+This is a scalar function that takes an input between 0 and 1 and output another scalar, typically also between 0 and 1.
+For convenience, there are many predefined easing functions available, the most important ones probably being `ease.linear` and `ease.smoothstep`.
+Easings can be scaled, added, multiplied, chained, zoomed, etc. to customize them.
+An easing function can be plotted via its `plot()` method (e.g. `ease.in_out_cubic.plot()`)
+Here is an example of some operations:
+
+```python
+ease.Easing.plot(
+    ease.linear,
+    ease.smoothstep,
+    ease.smoothstep.chain(),
+    0.5 * ease.in_out_cubic.reverse,
+    ease.out_elastic.symmetric,
+    ease.smoothstep.symmetric,
+    ease.smoothstep.between(-0.5,1),
+    ease.smoothstep[0.1:0.75]
+    -3*ease.linear + ease.smoothstep
+)
+```
+
+![easings](docs/images/easings.png)
 
 # Function Reference
 
@@ -847,6 +873,37 @@ slab(z0=0, dx=5, dy=20, z1=30,k=2).twist_between(
     # smoothstep funtion between 0° and 80°
     e=units("80°").to("radians").m * ease.smoothstep
     ).save()
+```
+
+### stretch
+
+<img width=128 align="right" src="docs/images/stretch.png">
+
+Stretch an object from here to there.
+
+```python
+# stretch a sphere vertically to make a capsule
+sphere(10).stretch(ORIGIN, 20*Z).save()
+# specify symmetric=True to stretch equally in the opposite direction
+```
+
+### shear
+
+<img width=128 align="right" src="docs/images/shear-smooth.png">
+
+Grab a point and move it into a direction, keeping another point fix. 
+This can be used to perform a shearing operation.
+
+```python
+box([20,10,50]).shear(fix=-15*Z, grab=15*Z, move=-10*X, e=ease.smoothstep).save()
+```
+
+<img width=128 align="right" src="docs/images/shear-smooth.png">
+
+The easing function can be used to scale the movement along the way, e.g. to make a notch.
+
+```python
+box([20,10,50]).shear(-15*Z, 15*Z, -5*X, e=ease.smoothstep.symmetric).save()
 ```
 
 ### modulate_between
