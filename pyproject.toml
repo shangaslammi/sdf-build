@@ -17,20 +17,28 @@ scipy = "^1"
 Pillow = "^10.0.1"
 rich = "^13.5.3"
 Pint = "^0.22"
-nbstripout = "^0.6.1"
-trame-vtk = "^2.5.8"
+ipython = {version = "^8.15.0", optional = true}
+ipywidgets = {version = "^8.1.1", optional = true}
+jupyterlab = {version = "^4.0.6", optional = true}
+pyvista = {version = "^0.42.2", optional = true}
+trame = {version = "^3.2.6", optional = true}
+trame-vtk = {version = "^2.5.8", optional = true}
+trame-vuetify = {version = "^2.3.1", optional = true}
 
 [tool.poetry.extras]
-show = ["trame","pyvista"]
+jupyter = [
+    "ipython",
+    "ipywidgets",
+    "jupyterlab",
+    "pyvista",
+    "trame",
+    "trame-vtk",
+    "trame-vuetify"
+]
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.15.0"
-jupyterlab = "^4.0.6"
-trame = "^3.2.6"
-pyvista = "^0.42.2"
-ipywidgets = "^8.1.1"
-trame-vuetify = "^2.3.1"
 coverage = "^7.3.1"
+nbstripout = "^0.6.1"
 
 [build-system]
 requires = ["poetry-core"]
