@@ -48,6 +48,7 @@ dist:
     needs: [] # job can start right away
     script:
         - pip install poetry
+        - git fetch --tags
         - poetry version "$(python get_version.py)"
         - poetry build
     artifacts:
