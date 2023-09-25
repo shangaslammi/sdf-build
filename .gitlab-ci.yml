@@ -2,7 +2,7 @@ include:
     # Python black and PEP8 code style check
     - "https://gitlab.com/nobodyinperson/ci-templates/raw/master/python-black-pep8.yml"
     # PyPI upload
-    - "https://gitlab.com/nobodyinperson/ci-templates/raw/master/pypi-upload.yml"
+    # - "https://gitlab.com/nobodyinperson/ci-templates/raw/master/pypi-upload.yml"
 
 image: python:latest
 
@@ -19,6 +19,7 @@ coverage:python:latest:
     stage: test
     image: python:latest
     script:
+        - pip install poetry
         - poetry version "$(python get_version.py)"
         - poetry install
         - poetry run coverage run --source=parmesan -m tests -v

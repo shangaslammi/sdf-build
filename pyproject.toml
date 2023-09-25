@@ -5,6 +5,7 @@ description = "Simple 3D mesh generation with Python based on signed distance fu
 authors = ["Yann Büchau <nobodyinperson@posteo.de>","Michael Fogleman <michael.fogleman@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [ { include = "sdf" } ]
 
 [tool.poetry.dependencies]
 python = "^3.9"
