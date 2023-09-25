@@ -20,9 +20,10 @@ coverage:python:latest:
     image: python:latest
     script:
         - pip install poetry
+        - git fetch --tags
         - poetry version "$(python get_version.py)"
         - poetry install
-        - poetry run coverage run --source=parmesan -m tests -v
+        - poetry run coverage run --source=sdf -m tests -v
         - poetry run coverage html
         - poetry run coverage report
         - mv htmlcov/ "$COVERAGE_STATIC_DIR"
@@ -60,7 +61,7 @@ dist:
 #     stage: deploy
 #     environment:
 #         name: Python Package Index
-#         url: https://pypi.org/project/parmesan/
+#         url: https://pypi.org/project/sdfcad/
 #     dependencies:
 #         - dist
 #     only:
@@ -76,7 +77,7 @@ pages:
     stage: deploy
     environment:
         name: GitLab Pages
-        url: https://tue-umphy.gitlab.io/software/parmesan
+        url: https://nobodyinperson.gitlab.io/sdfCAD
     dependencies:
         - coverage:python:latest
     script:
