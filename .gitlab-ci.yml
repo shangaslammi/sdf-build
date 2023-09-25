@@ -19,12 +19,11 @@ coverage:python:latest:
     stage: test
     image: python:latest
     script:
-        - pip install coveralls .
-        - "PACKAGE_NAME=`python3 -c 'from setuptools import find_packages;print(find_packages(exclude=[\"tests\"])[0])'`"
-        - coverage run --source="$PACKAGE_NAME" -m unittest -v
-        - coverage html
-        - coverage report
-        - coverage xml
+        - poetry version "$(python get_version.py)"
+        - poetry install
+        - poetry run coverage run --source=parmesan -m tests -v
+        - poetry run coverage html
+        - poetry run coverage report
         - mv htmlcov/ "$COVERAGE_STATIC_DIR"
     coverage: '/TOTAL.*\s+(\d+\%)/'
     artifacts:
@@ -47,23 +46,25 @@ dist:
     dependencies: [] # no other artifacts needed
     needs: [] # job can start right away
     script:
-        - python3 setup.py sdist
+        - pip install poetry
+        - poetry version "$(python get_version.py)"
+        - poetry build
     artifacts:
         paths:
             - dist/*
         expire_in: 1 week
 
-pypi-upload:
-    stage: deploy
-    environment:
-        name: Python Package Index
-        url: https://pypi.org/project/parmesan/
-    dependencies:
-        - dist
-    only:
-        - main
-    only:
-        - tags
+# pypi-upload:
+#     stage: deploy
+#     environment:
+#         name: Python Package Index
+#         url: https://pypi.org/project/parmesan/
+#     dependencies:
+#         - dist
+#     only:
+#         - main
+#     only:
+#         - tags
 
 pages:
     image: alpine
