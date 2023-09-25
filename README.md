@@ -111,12 +111,12 @@ following the directions below.
 
 ## 📥 Installation
 
-Use the commands below to clone the repository and install the `sdf` library
-in a Python virtualenv.
-
 Quick install with `pip`:
 
 ```bash
+# optionally make a virtualenv
+python -m venv sdf-venv
+source sdf-venv/bin/activate
 # together with the dependencies to run within Jupyter
 pip install 'sdfcad[jupyter] @ git+https://gitlab.com/nobodyinperson/sdfCAD'
 # for headless operation
@@ -195,7 +195,7 @@ Or you can specify approximately how many points to sample:
 f.save('out.stl', samples=2**24) # sample about 16M points
 ```
 
-By default, `samples=2**22` is used.
+By default, `samples=2**18` is used.
 
 *Tip*: Use the default resolution while developing your SDF. Then when you're done,
 crank up the resolution for your final output.

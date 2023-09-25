@@ -10,7 +10,7 @@ import time
 from . import progress, stl
 
 WORKERS = multiprocessing.cpu_count()
-SAMPLES = 2**22
+SAMPLES = 2**18
 BATCH_SIZE = 32
 
 
