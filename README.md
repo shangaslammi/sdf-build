@@ -364,7 +364,7 @@ See the [customizable box example](examples/customizable_box.py) for some starti
 
 ## Easings
 
-Many functions in sdfCAD take an optional **easing** parameter `e`. 
+Many transformations in sdfCAD take an optional **easing** parameter `e`.
 This is a scalar function that takes an input between 0 and 1 and output another scalar, typically also between 0 and 1.
 For convenience, there are many predefined easing functions available, the most important ones probably being `ease.linear` and `ease.smoothstep`.
 Easings can be scaled, added, multiplied, chained, zoomed, etc. to customize them.
@@ -898,7 +898,7 @@ This can be used to perform a shearing operation.
 box([20,10,50]).shear(fix=-15*Z, grab=15*Z, move=-10*X, e=ease.smoothstep).save()
 ```
 
-<img width=128 align="right" src="docs/images/shear-smooth.png">
+<img width=128 align="right" src="docs/images/shear-notch.png">
 
 The easing function can be used to scale the movement along the way, e.g. to make a notch.
 
