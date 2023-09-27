@@ -39,6 +39,7 @@
 >     - finding boundaries/closest surface points/intersections via optimization of the SDF
 >     - `shell()` can now also do inner and outer shell, not just around boundary
 > - Many usability fixes here and there
+>     - `save()` is now properly interruptible, no more zombie worker threads
 >     - `save()` now optionally shows the mesh with `pyvista` (useful in Notebooks)
 >     - docstrings are shown properly in interactive Python shells
 >     - `k()` now creates a copy and doesn't modify the object itself
