@@ -138,17 +138,17 @@ def generate(
     points = []
     skipped = empty = nonempty = 0
     bar = progress.Bar(num_batches, enabled=verbose)
-    pool = ThreadPool(workers)
     f = partial(_worker, sdf, sparse=sparse)
-    for result in pool.imap(f, batches):
-        bar.increment(1)
-        if result is None:
-            skipped += 1
-        elif len(result) == 0:
-            empty += 1
-        else:
-            nonempty += 1
-            points.extend(result)
+    with ThreadPool(workers) as pool:
+        for result in pool.imap(f, batches):
+            bar.increment(1)
+            if result is None:
+                skipped += 1
+            elif len(result) == 0:
+                empty += 1
+            else:
+                nonempty += 1
+                points.extend(result)
     bar.done()
 
     if verbose:
