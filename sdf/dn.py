@@ -6,6 +6,24 @@ _min = np.minimum
 _max = np.maximum
 
 
+def distance_to_plane(p, origin, normal):
+    """
+    Calculate the distance of a point ``p`` to the plane around ``origin`` with
+    normal ``normal``. This is dimension-independent, so e.g. the z-coordinate
+    can be omitted.
+
+    Args:
+        p (array): either [x,y,z] or [[x,y,z],[x,y,z],...]
+        origin (vector): a point on the plane
+        normal (vector): normal vector of the plane
+
+    Returns:
+        int: distance to plane
+    """
+    normal = normal / np.linalg.norm(normal)
+    return abs((p - origin) @ normal)
+
+
 def union(a, *bs, k=None):
     def f(p):
         d1 = a(p)
