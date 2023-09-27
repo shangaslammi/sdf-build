@@ -349,6 +349,8 @@ def extrude_to(a, b, h, e=ease.linear):
 def revolve(other, offset=0):
     def f(p):
         xy = p[:, [0, 1]]
+        # use horizontal distance to Z axis as X coordinate in 2D shape
+        # use Z coordinate as Y coordinate in 2D shape
         q = _vec(_length(xy) - offset, p[:, 2])
         return other(q)
 

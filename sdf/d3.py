@@ -6,8 +6,7 @@ import warnings
 import copy
 
 # internal modules
-from .util import alpha_quality
-from . import dn, d2, ease, mesh
+from . import dn, d2, ease, mesh, errors, util
 from .units import units
 
 # external modules
@@ -67,7 +66,7 @@ class SDF3:
     def generate(self, *args, **kwargs):
         return mesh.generate(self, *args, **kwargs)
 
-    @alpha_quality
+    @errors.alpha_quality
     def closest_surface_point(self, point):
         def distance(p):
             # root() wants same input/output dims (yeah...)
@@ -76,7 +75,9 @@ class SDF3:
         dist = self.f(np.expand_dims(point, axis=0)).ravel()[0]
         optima = dict()
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", (LinAlgWarning, RuntimeWarning))
+            warnings.simplefilter(
+                "ignore", (LinAlgWarning, RuntimeWarning, UserWarning)
+            )
             for method in (
                 # loosely sorted by speed
                 "lm",
@@ -141,11 +142,12 @@ class SDF3:
                     f"Distance between {closest_point} and {point} is {np.linalg.norm(point - closest_point)}, "
                     f"SDF says it should be {dist} (that's {best_root.dist_error} or {best_root.dist_error_rel*100:.2f}% off)).\n"
                     f"The root finding algorithms seem to have a problem with your SDF, "
-                    f"this might be caused due to operations breaking the metric like non-uniform scaling."
+                    f"this might be caused due to operations breaking the metric like non-uniform scaling.",
+                    errors.SDFCADWarning,
                 )
         return closest_point
 
-    @alpha_quality
+    @errors.alpha_quality
     def surface_intersection(self, start, direction=None):
         """
         ``start`` at a point, move (back or forth) along a line following a
@@ -178,7 +180,9 @@ class SDF3:
         dist = self.f(np.expand_dims(start, axis=0)).ravel()[0]
         optima = dict()
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", (LinAlgWarning, RuntimeWarning))
+            warnings.simplefilter(
+                "ignore", (LinAlgWarning, RuntimeWarning, UserWarning)
+            )
             for method in (
                 # loosely sorted by speed
                 "lm",
@@ -227,15 +231,16 @@ class SDF3:
                     f"The SDF there is {best_root.fun[0]} (should be 0, that's {best_root.zero_error} or {best_root.zero_error_rel*100:.2f}% off).\n"
                     f"The root finding algorithms seem to have a problem with your SDF, "
                     f"this might be caused due to operations breaking the metric like non-uniform scaling "
-                    f"or just because there is no intersection..."
+                    f"or just because there is no intersection...",
+                    errors.SDFCADWarning,
                 )
         return closest_point
 
-    @alpha_quality
-    def distance_to_plane(self, origin, normal, return_point=False):
+    @errors.alpha_quality
+    def minimum_sdf_on_plane(self, origin, normal, return_point=False):
         """
-        Find the (minimum) SDF distance (not necessarily real distance if you
-        have non-uniform scaling!) to a plane around an ``origin`` that points
+        Find the minimum SDF distance (not necessarily the real distance if you
+        have non-uniform scaling!) on a plane around an ``origin`` that points
         into the ``normal`` direction.
 
         Args:
@@ -261,7 +266,9 @@ class SDF3:
 
         optima = dict()
         with warnings.catch_warnings():
-            # warnings.simplefilter("ignore", (LinAlgWarning, RuntimeWarning))
+            warnings.simplefilter(
+                "ignore", (LinAlgWarning, RuntimeWarning, UserWarning)
+            )
             for method in (
                 "Nelder-Mead",
                 "Powell",
@@ -285,13 +292,12 @@ class SDF3:
                     logger.error(f"{method = } error {e!r}")
 
         best_min = optima[min(optima, key=lambda m: optima[m].fun)]
-        closest_point = transform(best_min.x)
         if return_point:
-            return best_min.fun, closest_point
+            return best_min.fun, best_min.point
         else:
             return best_min.fun
 
-    @alpha_quality
+    @errors.alpha_quality
     def extent_in(self, direction):
         """
         Determine the largest distance from the origin in a given ``direction``
@@ -307,24 +313,17 @@ class SDF3:
         # object ends when SDF is only increasing (not the case for infinite repetitions e.g.)
         probing_points = np.expand_dims(np.logspace(0, 9, 30), axis=1) * direction
         d = self.f(probing_points)  # get SDF value at probing points
-        order = (d[1:] > d[:-1]) & (
-            d[:-1] > 0
-        )  # is the next element larger than previous and positive?
-        # TODO: Not happy at all with this if/else mess. Is there no easier way to find the
-        #       index in a numpy array after which the values are only ascending? 🤔
-        if np.all(order):  # all ascending
-            n_trailing_ascending = d.size
-        elif np.all(~order):  # none ascending
-            n_trailing_ascending = 0
-        else:  # count from end how many are ascending
-            n_trailing_ascending = np.argmin(order[::-1]) + 1
+        n_trailing_ascending = util.n_trailing_ascending_positive(d)
+        if not n_trailing_ascending:
+            return np.inf
         if (ratio := n_trailing_ascending / d.size) < 0.5:
             warnings.warn(
                 f"extent_in({direction = !r}): "
-                f"Only {ratio*100:.1f}% of probed points in "
-                f"{direction = } have ascending SDF distance values. "
+                f"Only {n_trailing_ascending}/{d.size} ({ratio*100:.1f}%) of probed points in "
+                f"{direction = } have ascending positive SDF distance values. "
                 f"This can be caused by infinite objects. "
-                f"Result of might be wrong. "
+                f"Result of might be wrong. ",
+                errors.SDFCADWarning,
             )
         faraway = probing_points[
             -n_trailing_ascending + 1
@@ -335,7 +334,7 @@ class SDF3:
         extent = np.linalg.norm(closest_surface_point)
         return extent
 
-    @alpha_quality
+    @errors.alpha_quality
     def closest_surface_point_to_plane(self, origin, normal):
         """
         Find the closest surface point to a plane around an ``origin`` that points
@@ -348,12 +347,12 @@ class SDF3:
         Returns:
             3d vector : closest surface point
         """
-        distance, plane_point = self.distance_to_plane(
+        distance, plane_point = self.minimum_sdf_on_plane(
             origin=origin, normal=normal, return_point=True
         )
         return self.surface_intersection(start=plane_point, direction=normal)
 
-    @alpha_quality
+    @errors.alpha_quality
     def move_to_positive(self, direction=Z):
         return self.translate(self.extent_in(-direction) * direction)
 
