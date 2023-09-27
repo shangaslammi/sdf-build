@@ -451,9 +451,33 @@ class SDF3:
                 return
             # pv.set_jupyter_backend("client")
             plotter = pv.Plotter()
+            # axes = pv.Axes(show_actor=True, actor_scale=2, line_width=5)
+            # plotter.camera = pv.Camera()
+            # plotter.camera.position = (-1, -1, 1)
+            # plotter.add_actor(axes.actor)
             plotter.enable_parallel_projection()
             m = pv.read(path)
             plotter.add_mesh(m)
+            # xl, xu, yl, yu, zl, zu = m.bounds
+            # plotter.add_ruler(
+            #     pointa=[0, 0, 0],
+            #     pointb=[max(0, xu), 0, 0],
+            #     number_minor_ticks=10,
+            #     title="X",
+            # )
+            # plotter.add_ruler(
+            #     pointa=[0, 0, 0],
+            #     pointb=[0, max(0, yu), 0],
+            #     number_minor_ticks=10,
+            #     title="Y",
+            # )
+            # plotter.add_ruler(
+            #     pointa=[0, 0, 0],
+            #     pointb=[0, 0, max(0, zu)],
+            #     number_minor_ticks=10,
+            #     title="Z",
+            # )
+            plotter.add_axes()
             if add_text:
                 if isinstance(add_text, str):
                     add_text = dict(text=add_text)
