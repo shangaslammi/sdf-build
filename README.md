@@ -36,8 +36,10 @@
 >     - `modulate_between()`: modify an object's thickness between two points with an easing function
 >     - `twist_between()`: twist an object between two points with a variable rotation angle specified by an easing function
 >     - `chamfer()`: chamfer along a plane
->     - finding boundaries/closest surface points/intersections via optimization of the SDF
 >     - `shell()` can now also do inner and outer shell, not just around boundary
+>   Shape analysis (not very precise and reliable yet):
+>     - `bounds()` et al.: finding boundaries/closest surface points/intersections via optimization of the SDF
+>     - `volume()`: brute-force-approximate the volume Monte-Carlo-style
 > - Many usability fixes here and there
 >     - `save()` is now properly interruptible, no more zombie worker threads
 >     - `save()` now optionally shows the mesh with `pyvista` (useful in Notebooks)

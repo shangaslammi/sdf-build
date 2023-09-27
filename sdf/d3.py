@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 import functools
 import numpy as np
@@ -14,6 +15,7 @@ from .units import units
 import scipy.optimize
 from scipy.linalg import LinAlgWarning
 import rich.progress
+import matplotlib.pyplot as plt
 
 # Constants
 
@@ -335,6 +337,19 @@ class SDF3:
         extent = np.linalg.norm(closest_surface_point)
         return extent
 
+    @property
+    @errors.alpha_quality
+    def bounds(self):
+        """
+        Return X Y Z bounds based on :any:`extent_in`.
+
+        Return:
+            6-sequence: lower X, upper X, lower Y, upper Y, lower Z, upper Z
+        """
+        return tuple(
+            np.sign(d.sum()) * self.extent_in(d) for d in [-X, X, -Y, Y, -Z, Z]
+        )
+
     @errors.alpha_quality
     def closest_surface_point_to_plane(self, origin, normal):
         """
@@ -419,6 +434,100 @@ class SDF3:
         result = result.modulate_between(at + size * direction, at, e=-size * e)
         result &= plane(direction, point=at)
         return result
+
+    def volume(
+        self, bounds=None, step=None, timeout=3, convergence_precision=0.01, plot=False
+    ):
+        """
+        Approximate the volume by sampling the SDF and counting the inside
+        hits.
+
+        Args:
+            bounds (6-sequence, optional): bounds as returned by `extent_in()`
+            step (float, optional): The (single) step size in all dimensions to use.
+                The default is an iterative process gradually refining the grid until
+                it looks like it converges.
+            timeout (float, optional): stop iterating after this time
+            convergence_precision (float, optional): relative volume variance
+                threshold to allow stopping iteration. For example `0.05` means that if the
+                last couple iterations don't vary more than 5% of the current
+                volume estimate, stop.
+            plot (bool, optional): whether to plot the process after completion
+
+        Returns:
+            float : the volume approximation
+        """
+        vols = []
+        ns = []
+        bounds = bounds or self.bounds
+        if not np.all(np.isfinite(bounds) & ~np.isnan(bounds)):
+            raise errors.SDFCADInfiniteObjectError(
+                f"Object has {bounds = }, can't approximate volume with that. "
+                f"You can specify bounds=(x,x,y,y,z,z) manually."
+            )
+        xl, xu, yl, yu, zl, zu = bounds
+        # expand bounds a bit outwards
+        xl -= (dx := abs(xu - xl)) * 0.05
+        xu += dx * 0.05
+        yl -= (dy := abs(yu - yl)) * 0.05
+        yu += dy * 0.05
+        zl -= (dz := abs(zu - zl)) * 0.05
+        zu += dz * 0.05
+        steps = (
+            np.linspace(min(dx, dy, dz) / 10, min(dx, dy, dz) / 1000, 100)
+            if step is None
+            else [step]
+        )
+        _steps = []
+        _samples = []
+        _hits = []
+        _vols = []
+        _times = []
+        _variances = []
+        _relvariances = []
+        time_start = time.perf_counter()
+        for step in steps:
+            if time.perf_counter() - time_start > timeout:
+                logger.warning(f"volume(): timeout of {timeout}s hit")
+                if not _vols:
+                    _vols.append(np.nan)
+                break
+            time_before = time.perf_counter()
+            _steps.append(step)
+            grid = np.stack(
+                np.meshgrid(
+                    np.arange(bounds[0], bounds[1] + step, step),
+                    np.arange(bounds[2], bounds[3] + step, step),
+                    np.arange(bounds[4], bounds[5] + step, step),
+                ),
+                axis=-1,
+            )
+            d = self.f(grid.reshape(-1, 3)).reshape(grid.shape[:-1])
+            _samples.append(samples := d.size)
+            _hits.append(hits := np.sum(d < 0))
+            _vols.append(vol := hits * (cellvol := step**3))
+            _times.append(time.perf_counter() - time_before)
+            # _variances.append(np.var(_vols[-5:]))
+            _variances.append(abs(max(_vols[-5:]) - min(_vols[-5:])))
+            _relvariances.append(_variances[-1] / _vols[-1])
+            if len(_variances) > 5 and _relvariances[-1] < convergence_precision:
+                logger.warning(f"volume(): convergence_precision hit")
+                break
+        if plot:
+            fig, axes = plt.subplots(nrows=5, sharex=True)
+            axes[-1].set_xlabel("cell side size")
+            axes[0].scatter(_steps, _vols)
+            axes[0].set_ylabel("est. volume")
+            axes[1].scatter(_steps, np.array(_hits) / np.array(_samples))
+            axes[1].set_ylabel("hit ratio")
+            axes[2].scatter(_steps, np.array(_times))
+            axes[2].set_ylabel("time estimation took")
+            axes[3].scatter(_steps, _variances)
+            axes[3].set_ylabel("volume variance of last couple steps bigger than...")
+            axes[4].scatter(_steps, _relvariances)
+            axes[4].set_ylabel("rel variance of last couple steps bigger than...")
+            plt.show()
+        return _vols[-1]
 
     def save(
         self,
