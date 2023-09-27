@@ -28,6 +28,7 @@
 >         - just a twisted offset infinite cylinder, very nice to 3D print due to the smoothness
 >         - `sphere(10)-Thread().dilate(0.4)` makes a nice thread hole with tolerance
 >         - `Screw()` with head for convenience
+>     - `pieslice()`: a vertically infinite pie slice, useful to cut out parts
 > - New operations:
 >     - `mirror()` an object at an arbitrary point into an any direction
 >     - `stretch()` an object from here to there
@@ -56,12 +57,13 @@
 
 [![coverage report](https://gitlab.com/nobodyinperson/sdf/badges/main/coverage.svg)](https://gitlab.com/nobodyinperson/sdf/-/pipelines)
 
-# sdf
+# sdfCAD
 
-Generate 3D meshes based on SDFs (signed distance functions) with a
-dirt simple Python API.
+Generate 3D meshes based on SDFs (signed distance functions) with a dirt simple Python API.
 
-Special thanks to [Inigo Quilez](https://iquilezles.org/) for his excellent documentation on signed distance functions:
+Special thanks to Michael Fogleman for initializing this codebase in [GitHub:fogleman/sdf](https://github.com/fogleman/sdf).
+
+Special thanks also to [Inigo Quilez](https://iquilezles.org/) for his excellent documentation on signed distance functions:
 
 - [3D Signed Distance Functions](https://iquilezles.org/www/articles/distfunctions/distfunctions.htm)
 - [2D Signed Distance Functions](https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm)
@@ -99,8 +101,7 @@ Have a cool example? Submit a PR!
 
 ## Requirements
 
-Note that the dependencies will be automatically installed by setup.py when
-following the directions below.
+Note that the dependencies will be automatically installed by when following the directions below.
 
 - Python 3
 - matplotlib
@@ -109,6 +110,7 @@ following the directions below.
 - Pillow
 - scikit-image
 - scipy
+- (pyvista, trame, jupyter, ...)
 
 ## 📥 Installation
 
