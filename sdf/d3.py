@@ -1,3 +1,4 @@
+import os
 import logging
 import functools
 import numpy as np
@@ -430,7 +431,7 @@ class SDF3:
         **kwargs,
     ):
         mesh.save(path, self, **{**dict(samples=2**18), **kwargs})
-        print(f"💾 Saved mesh to {path!r}")
+        print(f"💾 Saved mesh to {path!r} ({os.stat(path).st_size} bytes)")
         if openscad:
             with open((p := f"{path}.scad"), "w") as fh:
                 fh.write(
